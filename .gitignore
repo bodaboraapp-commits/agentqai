@@ -67,6 +67,10 @@ yarn-error.log
 .htaccess
 # ...except the shared-hosting shim in the project root.
 !/.htaccess
+# ...and except the front controller rewrite. Without this file Apache cannot
+# send /install, /dashboard or any other URL to index.php: only "/" works and
+# every other path 404s. It is runtime configuration, not a dotfile secret.
+!/public/.htaccess
 # Install markers — written at install time, never shipped. A tracked
 # public/.installed makes a fresh copy look already-installed and locks the
 # buyer out of /install.
