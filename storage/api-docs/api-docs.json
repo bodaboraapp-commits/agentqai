@@ -1,0 +1,1530 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "AgentQ AI Telemarketing API",
+        "description": "RESTful API for AgentQ AI telemarketing platform. Integrate with CRM, ERP, and other business applications.",
+        "contact": {
+            "name": "AgentQ AI Support",
+            "email": "support@agentqai.cx"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Local Development Server"
+        },
+        {
+            "url": "https://api.agentqai.cx",
+            "description": "Production Server"
+        }
+    ],
+    "paths": {
+        "/api/v1/analytics/overview": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get dashboard overview statistics",
+                "operationId": "e124baa55b741a8a7987ad23213a0a0a",
+                "responses": {
+                    "200": {
+                        "description": "Overview statistics"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/analytics/campaigns": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get campaign analytics",
+                "operationId": "7a8c367390be32af5408f0b60dd35e88",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign analytics"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/analytics/calls": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get call analytics",
+                "operationId": "117f3d46c298db34138d6bb6becdfe76",
+                "parameters": [
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Call analytics"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login and get API token",
+                "operationId": "a7997e7c1e3bfed64d4e56de82415931",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@agentqai.cx"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    },
+                                    "token_name": {
+                                        "type": "string",
+                                        "example": "mobile-app"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "operationId": "b9e746d77661fb8df55d0ac63e1ece77",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get authenticated user",
+                "operationId": "8da19d20faaa3c751514549040698f0d",
+                "responses": {
+                    "200": {
+                        "description": "Current user data"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout (revoke current token)",
+                "operationId": "f6b8957b4c0b25636613a9f0512a8ba9",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/tokens": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "List all user tokens",
+                "operationId": "695ae3e5faf0f283e244c78ea31eab32",
+                "responses": {
+                    "200": {
+                        "description": "List of tokens"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Create a new API token",
+                "operationId": "230c6729eee99b3afd8c105551e8dcf1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CRM Integration"
+                                    },
+                                    "abilities": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "campaigns:read",
+                                            "contacts:write"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Token created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/tokens/{tokenId}": {
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Revoke a specific token",
+                "operationId": "af42fae85aa5fa64a843cf6b32f672e6",
+                "parameters": [
+                    {
+                        "name": "tokenId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token revoked successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/calls": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "List all calls",
+                "operationId": "49dbb5e3575aae75934cacc3e17f6705",
+                "parameters": [
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[direction]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[campaign_id]",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "-started_at"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calls list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/calls/{id}": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Get call details",
+                "operationId": "4be503d95fdb386253f217482f66e78a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Call details"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/calls/{id}/recording": {
+            "get": {
+                "tags": [
+                    "Calls"
+                ],
+                "summary": "Get call recording URL",
+                "operationId": "4a651a3967061edc0e58a106db19dcc3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recording URL",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "recording_url": {
+                                            "type": "string"
+                                        },
+                                        "duration": {
+                                            "type": "integer"
+                                        },
+                                        "sid": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "List all campaigns",
+                "operationId": "1fbc4f93a5e90fc04f148461f9884c04",
+                "parameters": [
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[type]",
+                        "in": "query",
+                        "description": "Campaign type, matched exactly. Give more than one as a comma-separated list to match any of them.",
+                        "style": "form",
+                        "explode": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "tts",
+                                    "audio"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "-created_at"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaigns list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Create a new campaign",
+                "description": "Create a new campaign. When phone_number_id is provided, the system automatically checks if that phone number has an active AI agent assigned and will auto-assign the ai_agent_id to the campaign.",
+                "operationId": "dfdd42b3daedd3bb1cd5b39107fe105a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "message"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Summer Sale Campaign"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "tts",
+                                            "audio"
+                                        ],
+                                        "example": "tts"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Hello {first_name}, we have a special offer for you!"
+                                    },
+                                    "phone_number_id": {
+                                        "description": "Phone number ID - AI agent will be auto-assigned if phone has one",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "voice": {
+                                        "type": "string",
+                                        "example": "alice"
+                                    },
+                                    "caller_id": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "enable_recording": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "max_concurrent_calls": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Campaign created successfully. ai_agent_id will be populated automatically if phone number has an active AI agent.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Campaign"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Campaign created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get campaign details",
+                "operationId": "fc2fb7b68a8a6e84ea3153d80ad3f2bd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign details"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Update campaign",
+                "description": "Update campaign. When changing phone_number_id, the system automatically updates ai_agent_id based on the new phone number. If the new phone has no AI agent, ai_agent_id will be set to null.",
+                "operationId": "fcbf59e91ac0d2def4e84883cccfae48",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "phone_number_id": {
+                                        "description": "Change phone number - AI agent will be auto-updated",
+                                        "type": "integer"
+                                    },
+                                    "message": {
+                                        "type": "string"
+                                    },
+                                    "enable_recording": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Campaign updated successfully. ai_agent_id updated automatically based on phone number."
+                    },
+                    "400": {
+                        "description": "Cannot update running campaign"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Delete campaign",
+                "operationId": "14d76752b71aa19b04e7f1759cfaea7f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/start": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Start campaign",
+                "operationId": "6eff3c383c91f604fb7f23da67f62237",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign started successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/pause": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Pause campaign",
+                "operationId": "d8ac823e35eb1139d0cbc5d3bbf091d3",
+                "responses": {
+                    "200": {
+                        "description": "Campaign paused"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/resume": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Resume paused campaign",
+                "operationId": "84da357f2b092fc51d4800829d3ecfd3",
+                "responses": {
+                    "200": {
+                        "description": "Campaign resumed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/stop": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Stop campaign",
+                "operationId": "78378541efc994bf946db075b5aa5e90",
+                "responses": {
+                    "200": {
+                        "description": "Campaign stopped"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/stats": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get campaign statistics",
+                "operationId": "45301e45828a50538f46f066a444ce97",
+                "responses": {
+                    "200": {
+                        "description": "Campaign statistics"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/calls": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get campaign calls",
+                "operationId": "dc7057d69c0f81ca2f503564ba315a40",
+                "responses": {
+                    "200": {
+                        "description": "Campaign calls list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/campaigns/{id}/contacts": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get campaign contacts",
+                "operationId": "43d6bedcb5566826de73dcd002d61a45",
+                "responses": {
+                    "200": {
+                        "description": "Campaign contacts list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List all contacts",
+                "operationId": "7ba58fcc6fbe7a027323651586d2fd7f",
+                "parameters": [
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[phone_number]",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contacts list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create a new contact",
+                "operationId": "15c43d3f7dcf308412eae1fed188e42a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone_number"
+                                ],
+                                "properties": {
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "company": {
+                                        "type": "string",
+                                        "example": "Acme Inc"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contact created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/{id}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Get contact details",
+                "operationId": "9ff6ecca2b683fe6e04145d21cd2412e",
+                "responses": {
+                    "200": {
+                        "description": "Contact details"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Update contact",
+                "operationId": "8bc3f68d02a3ef418ed0e40785c91da1",
+                "responses": {
+                    "200": {
+                        "description": "Contact updated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete contact",
+                "operationId": "b9811eb977a1c3d348dbe900e8bc2f69",
+                "responses": {
+                    "200": {
+                        "description": "Contact deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/bulk": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Bulk create contacts",
+                "operationId": "7fb1bcbcf6bfe6409b375808760dde70",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "contacts": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "phone_number": {
+                                                    "type": "string"
+                                                },
+                                                "first_name": {
+                                                    "type": "string"
+                                                },
+                                                "last_name": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contacts created"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/export/csv": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Export contacts as CSV",
+                "operationId": "2cfc9f942774f2707f49cc5eb7814ff7",
+                "responses": {
+                    "200": {
+                        "description": "CSV file download"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/import/csv": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Import contacts from CSV",
+                "operationId": "cac2ba602746016225dedf19018b8cb0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Import completed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List all users",
+                "operationId": "12e989554c281d650dff75443acabf54",
+                "responses": {
+                    "200": {
+                        "description": "Users list"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a new user",
+                "operationId": "64da9b5a20fa4f20e947ed61b2bbb6da",
+                "responses": {
+                    "201": {
+                        "description": "User created"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user details",
+                "operationId": "a9d321d5dc6bc2613c6cf5ba92b76c89",
+                "responses": {
+                    "200": {
+                        "description": "User details"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "operationId": "5bcda8371b3cb9f863a47620e636be9b",
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "operationId": "0446b3779430bbd9ca0f106d9fd0a2ed",
+                "responses": {
+                    "200": {
+                        "description": "User deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "America/New_York"
+                    },
+                    "credit_balance": {
+                        "type": "number",
+                        "example": 100.5
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Campaign": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "tts",
+                            "audio"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "scheduled",
+                            "running",
+                            "paused",
+                            "completed",
+                            "stopped"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "phone_number_id": {
+                        "description": "Phone number used for campaign",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "ai_agent_id": {
+                        "description": "AI agent automatically assigned based on phone number (read-only)",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Contact": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "phone_number": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "company": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Call": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": [
+                            "inbound",
+                            "outbound"
+                        ]
+                    },
+                    "from_number": {
+                        "type": "string"
+                    },
+                    "to_number": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "duration_seconds": {
+                        "type": "integer"
+                    },
+                    "recording_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "AiAgent": {
+                "required": [
+                    "name",
+                    "phone_number"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Sales Support Agent"
+                    },
+                    "phone_number": {
+                        "description": "Phone number assigned to this AI agent",
+                        "type": "string",
+                        "example": "+15189001255"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Handles customer inquiries and sales calls",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "inbound",
+                            "outbound"
+                        ],
+                        "example": "inbound"
+                    },
+                    "system_prompt": {
+                        "description": "System instructions for AI agent behavior",
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "gpt-4"
+                    },
+                    "voice": {
+                        "type": "string",
+                        "example": "alloy"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "enable_transfer": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "transfer_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "enable_recording": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "max_duration": {
+                        "description": "Maximum call duration in seconds",
+                        "type": "integer",
+                        "example": 300
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Error": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "properties": {
+                            "message": {
+                                "type": "string"
+                            },
+                            "code": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Enter your API token in the format: Bearer {token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Analytics",
+            "description": "Analytics and statistics endpoints"
+        },
+        {
+            "name": "Authentication",
+            "description": "API authentication and token management endpoints"
+        },
+        {
+            "name": "Calls",
+            "description": "Call history and recordings endpoints (read-only)"
+        },
+        {
+            "name": "Campaigns",
+            "description": "Campaign management endpoints"
+        },
+        {
+            "name": "Contacts",
+            "description": "Contact management endpoints"
+        },
+        {
+            "name": "Users",
+            "description": "User management endpoints (admin only)"
+        }
+    ]
+}

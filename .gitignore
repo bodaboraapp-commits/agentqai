@@ -1,0 +1,77 @@
+/.phpunit.cache
+/bootstrap/ssr
+/node_modules
+/public/hot
+/public/storage
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+/storage/*.key
+/storage/pail
+# Dated .env snapshots — these contain live credentials, never commit them.
+/storage/backups
+/vendor
+/zapier/node_modules
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+
+# Ignore markdown documentation files
+*.md
+!README.md
+# The release notes buyers read before upgrading. build-release.sh packages
+# `git archive HEAD`, so anything the blanket *.md rule swallows never reaches
+# a buyer — and an upgrade that changes what they are billed must.
+!CHANGELOG.md
+# The live-call checklist a buyer follows against their own installation before
+# it carries customer traffic; it is useless to them if it stays in the repo.
+!/docs/telephony-live-verification.md
+# Shipped runtime asset, not documentation: ConversationEngine reads this at
+# request time. The blanket *.md rule is why it was never committed and every
+# AI agent ran with no baseline conversation or safety rules.
+!/public/voice-ai-base-instruction.md
+# Implementation plans are the spec for in-flight work; they must travel with
+# the branch they describe, so they are exempt from the blanket *.md rule.
+!/docs/superpowers/plans/*.md
+# Scratch workspace for plan execution (ledger, briefs, review packages).
+/.superpowers/
+/scripts
+.htaccess
+# ...except the shared-hosting shim in the project root.
+!/.htaccess
+# Install markers — written at install time, never shipped. A tracked
+# public/.installed makes a fresh copy look already-installed and locks the
+# buyer out of /install.
+/public/.installed
+/storage/installed
+
+# Sidecar lock used by EnvWriter/EnvBootstrap to serialise .env writes.
+.env.lock
+
+# Personal environment profiles. They held live Twilio/OpenRouter/Deepgram
+# keys and TURNSTILE_ENABLED=true, and were shipping to every buyer.
+/.env.dev
+/.env.prod
+
+# Release packages built by deployment/build-release.sh
+/dist
+
+# Local SQLite database created by the installer / local setup; never commit
+# customer data or an admin password hash.
+/database/*.sqlite
+
+# Scratch folder used when frontend bundles are rebuilt locally.
+/.build-tmp
