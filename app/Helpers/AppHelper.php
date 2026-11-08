@@ -61,22 +61,33 @@ class AppHelper
     {
         $light = self::getLogoUrl();
         $dark = self::getLogoDarkUrl();
+        $hasLogo = (bool) $light || (bool) $dark;
+
+        // A configured logo is assumed to be the complete wordmark, so the
+        // separate name text is not repeated next to it. Without a logo the
+        // fallback mark + name text render as before. (Previously the default
+        // "logo_text" mode printed the name twice when the uploaded logo
+        // already spelled it out: once inside the image, once as text.)
+        $defaultMode = $hasLogo ? 'logo_only' : 'logo_text';
 
         $defaults = [
-            'landing' => ['mode' => 'logo_text', 'size' => 34],
-            'dashboard' => ['mode' => 'logo_text', 'size' => 32],
-            'auth' => ['mode' => 'logo_text', 'size' => 40],
+            'landing' => ['mode' => $defaultMode, 'size' => 34],
+            'dashboard' => ['mode' => $defaultMode, 'size' => 32],
+            'auth' => ['mode' => $defaultMode, 'size' => 40],
         ];
 
         try {
             $s = ThemeSetting::first();
             if ($s) {
                 foreach (['landing', 'dashboard', 'auth'] as $surface) {
+                    // Only a deliberate non-default choice is honoured; the
+                    // column default "logo_text" keeps the logo-only behaviour
+                    // above. "text_only" stays available for logo-less styling.
                     $mode = $s->{"logo_display_{$surface}"} ?? null;
-                    $size = $s->{"logo_size_{$surface}"} ?? null;
-                    if ($mode) {
+                    if (in_array($mode, ['logo_only', 'text_only'], true)) {
                         $defaults[$surface]['mode'] = $mode;
                     }
+                    $size = $s->{"logo_size_{$surface}"} ?? null;
                     if ($size) {
                         $defaults[$surface]['size'] = (int) $size;
                     }
