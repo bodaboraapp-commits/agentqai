@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\TwilioAccountMigration;
 use App\Models\TwilioGlobalConfig;
+use App\Services\Twilio\DialingPermissionsUpdater;
 use App\Services\TwilioAccountMigrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -628,30 +629,35 @@ class TwilioController extends Controller
             return response()->json([
                 'countries' => $countries,
             ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch geo permissions: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch geo permissions: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch geo permissions: '.$e->getMessage(), ['exception' => $e::class]);
+
+            return response()->json(['error' => 'Failed to fetch geo permissions from Twilio: '.$e->getMessage()], 500);
         }
     }
     
     /**
-     * Update geo permissions by enabling/disabling specific countries
+     * Update geo permissions.
+     *
+     * `enabled_countries` is the COMPLETE set of countries that should accept
+     * calls. Only countries whose state actually differs are sent to Twilio,
+     * so a failed/partial call never mass-disables everything.
      */
     public function updateGeoPermissions(Request $request)
     {
-        if (!$request->user()->isAdmin()) {
+        if (! $request->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
         $validated = $request->validate([
-            'enabled_countries' => 'required|array',
-            'enabled_countries.*' => 'required|string|size:2', // ISO country codes
+            'enabled_countries' => 'present|array',
+            'enabled_countries.*' => 'string|size:2', // ISO country codes
         ]);
 
         // Try to get active config first, then fall back to any config
         $config = TwilioGlobalConfig::active() ?? TwilioGlobalConfig::first();
-        
-        if (!$config) {
+
+        if (! $config) {
             return response()->json(['error' => 'Please configure Twilio credentials first'], 404);
         }
 
@@ -660,73 +666,62 @@ class TwilioController extends Controller
                 $config->account_sid,
                 $config->getDecryptedAuthToken()
             );
-            
-            // First, get all available countries to disable them all
-            $allCountries = $client->voice->v1->dialingPermissions
-                ->countries->read();
-            
-            $allIsoCodes = array_map(function($country) {
-                return $country->isoCode;
-            }, iterator_to_array($allCountries));
-            
-            // Disable all countries first
-            if (!empty($allIsoCodes)) {
-                $client->voice->v1->dialingPermissions
-                    ->bulkCountryUpdates->create([
-                        'updateRequest' => implode(',', array_map(function($iso) {
-                            return $iso . ':low_risk_numbers_enabled=false,high_risk_special_numbers_enabled=false,high_risk_tollfraud_numbers_enabled=false';
-                        }, $allIsoCodes))
-                    ]);
-            }
-            
-            // If countries selected, enable them
-            if (!empty($validated['enabled_countries'])) {
-                $client->voice->v1->dialingPermissions
-                    ->bulkCountryUpdates->create([
-                        'updateRequest' => implode(',', array_map(function($iso) {
-                            return $iso . ':low_risk_numbers_enabled=true,high_risk_special_numbers_enabled=true,high_risk_tollfraud_numbers_enabled=true';
-                        }, $validated['enabled_countries']))
-                    ]);
-                
-                Log::info('Geo permissions updated', [
-                    'countries' => $validated['enabled_countries'],
-                ]);
-                
-                session()->flash('success', count($validated['enabled_countries']) . ' countries enabled successfully');
-                
+
+            $countries = iterator_to_array(
+                $client->voice->v1->dialingPermissions->countries->read()
+            );
+
+            ['updates' => $updates, 'unknown' => $unknown] =
+                DialingPermissionsUpdater::buildUpdates($countries, $validated['enabled_countries']);
+
+            if ($unknown !== []) {
                 return response()->json([
-                    'success' => true,
-                    'message' => count($validated['enabled_countries']) . ' countries enabled',
-                ]);
-            } else {
-                Log::info('All geo permissions disabled');
-                
-                session()->flash('success', 'All countries disabled successfully');
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'All countries disabled',
-                ]);
+                    'error' => 'Twilio does not recognise these country codes: '.implode(', ', $unknown),
+                ], 422);
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to update geo permissions: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update geo permissions: ' . $e->getMessage()], 500);
+
+            // The PHP SDK method is create(string $updateRequest), taking the
+            // URL-encoded JSON array of update objects — NOT an options array.
+            foreach (DialingPermissionsUpdater::payloads($updates) as $payload) {
+                $client->voice->v1->dialingPermissions->bulkCountryUpdates->create($payload);
+            }
+
+            $enabledCount = count(array_unique(array_map('strtoupper', $validated['enabled_countries'])));
+
+            Log::info('Geo permissions updated', [
+                'enabled' => $enabledCount,
+                'changed' => count($updates),
+            ]);
+
+            session()->flash('success', $updates === []
+                ? 'Geo permissions already matched your selection'
+                : $enabledCount.' countries enabled successfully');
+
+            return response()->json([
+                'success' => true,
+                'message' => $updates === [] ? 'No changes needed' : $enabledCount.' countries enabled',
+                'updated' => count($updates),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to update geo permissions: '.$e->getMessage(), ['exception' => $e::class]);
+
+            return response()->json(['error' => 'Failed to update geo permissions: '.$e->getMessage()], 500);
         }
     }
-    
     /**
-     * Enable all countries (remove geo restrictions)
+     * Enable every country Twilio offers (low-risk calls), touching only the
+     * countries that are currently disabled.
      */
     public function enableAllCountries(Request $request)
     {
-        if (!$request->user()->isAdmin()) {
+        if (! $request->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
         // Try to get active config first, then fall back to any config
         $config = TwilioGlobalConfig::active() ?? TwilioGlobalConfig::first();
-        
-        if (!$config) {
+
+        if (! $config) {
             return response()->json(['error' => 'Please configure Twilio credentials first'], 404);
         }
 
@@ -735,37 +730,35 @@ class TwilioController extends Controller
                 $config->account_sid,
                 $config->getDecryptedAuthToken()
             );
-            
-            // Get all available countries
-            $allCountries = $client->voice->v1->dialingPermissions
-                ->countries->read();
-            
-            $allIsoCodes = array_map(function($country) {
-                return $country->isoCode;
-            }, iterator_to_array($allCountries));
-            
-            // Enable all countries
-            if (!empty($allIsoCodes)) {
-                $client->voice->v1->dialingPermissions
-                    ->bulkCountryUpdates->create([
-                        'updateRequest' => implode(',', array_map(function($iso) {
-                            return $iso . ':low_risk_numbers_enabled=true,high_risk_special_numbers_enabled=true,high_risk_tollfraud_numbers_enabled=true';
-                        }, $allIsoCodes))
-                    ]);
+
+            $countries = iterator_to_array(
+                $client->voice->v1->dialingPermissions->countries->read()
+            );
+
+            $allCodes = [];
+            foreach ($countries as $country) {
+                $allCodes[] = (string) $country->isoCode;
             }
-            
-            Log::info('All geo permissions enabled');
-            
+
+            ['updates' => $updates] = DialingPermissionsUpdater::buildUpdates($countries, $allCodes);
+
+            foreach (DialingPermissionsUpdater::payloads($updates) as $payload) {
+                $client->voice->v1->dialingPermissions->bulkCountryUpdates->create($payload);
+            }
+
+            Log::info('All geo permissions enabled', ['changed' => count($updates)]);
+
             session()->flash('success', 'All countries enabled successfully');
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'All countries enabled',
+                'updated' => count($updates),
             ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to enable all countries: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to enable all countries: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Failed to enable all countries: '.$e->getMessage(), ['exception' => $e::class]);
+
+            return response()->json(['error' => 'Failed to enable all countries: '.$e->getMessage()], 500);
         }
     }
 }
-

@@ -1,2 +1,0 @@
-import{c as n}from"./createLucideIcon-DXkjkHXn.js";try{(function(){var e=typeof window<"u"?window:typeof global<"u"?global:typeof globalThis<"u"?globalThis:typeof self<"u"?self:{},d=new e.Error().stack;d&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[d]="3a90e630-2e48-4d6c-b154-0649dfafdf68",e._sentryDebugIdIdentifier="sentry-dbid-3a90e630-2e48-4d6c-b154-0649dfafdf68")})()}catch{}const t=[["path",{d:"M5 12h14",key:"1ays0h"}],["path",{d:"m12 5 7 7-7 7",key:"xquz4c"}]],f=n("ArrowRight",t);export{f as A};
-//# sourceMappingURL=arrow-right-DjgJ3Y13.js.map

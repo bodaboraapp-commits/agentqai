@@ -1,4 +1,4 @@
-﻿import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -126,6 +126,24 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
     return '••••••••' + str.slice(-visibleChars);
   };
 
+  // Turn an axios failure into a message that says WHY it failed. Without this,
+  // a 419 (expired session), a 422 (validation) and a 500 all showed the same
+  // generic "Failed to save geo permissions".
+  const describeAxiosError = (error: any, fallback: string): string => {
+    const response = error?.response;
+    const data = response?.data;
+    if (data && typeof data === 'object') {
+      const details = data.errors
+        ? Object.values(data.errors).flat().join(' ')
+        : '';
+      if (data.error) return details ? `${data.error} ${details}` : String(data.error);
+      if (data.message) return details ? `${data.message} ${details}` : String(data.message);
+    }
+    if (response?.status) return `${fallback} (HTTP ${response.status})`;
+    if (error?.message) return `${fallback}: ${error.message}`;
+    return fallback;
+  };
+
   // Load geo permissions when config exists
   useEffect(() => {
     if (config) {
@@ -141,8 +159,7 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
       setCountries(response.data.countries);
     } catch (error: any) {
       console.error('Failed to load geo permissions:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to load geo permissions';
-      setGeoError(errorMessage);
+      setGeoError(describeAxiosError(error, 'Failed to load geo permissions'));
       // If it's a 404 (no config), hide the error after a moment since the section shouldn't show anyway
       if (error.response?.status === 404) {
         setTimeout(() => setGeoError(null), 3000);
@@ -165,6 +182,10 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
   };
 
   const saveGeoPermissions = async () => {
+    if (countries.length === 0) {
+      setGeoError('The country list did not load from Twilio, so there is nothing to save. Check the Twilio credentials above, then reload this page.');
+      return;
+    }
     setSavingGeo(true);
     setGeoError(null);
     try {
@@ -183,7 +204,7 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
       });
     } catch (error: any) {
       console.error('Failed to save geo permissions:', error);
-      setGeoError(error.response?.data?.error || 'Failed to save geo permissions');
+      setGeoError(describeAxiosError(error, 'Failed to save geo permissions'));
     } finally {
       setSavingGeo(false);
     }
@@ -203,7 +224,7 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
       });
     } catch (error: any) {
       console.error('Failed to enable all countries:', error);
-      setGeoError(error.response?.data?.error || 'Failed to enable all countries');
+      setGeoError(describeAxiosError(error, 'Failed to enable all countries'));
     } finally {
       setSavingGeo(false);
     }
@@ -519,6 +540,17 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
                   <AlertDescription>{geoError}</AlertDescription>
                 </Alert>
               )}
+
+              {!loadingCountries && countries.length === 0 && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Country list unavailable</AlertTitle>
+                  <AlertDescription>
+                    Twilio did not return the dialing-permissions country list. Verify the Twilio
+                    credentials above, then reload this page before changing geo permissions.
+                  </AlertDescription>
+                </Alert>
+              )}
               
               {loadingCountries ? (
                 <div className="flex items-center justify-center py-8">
@@ -598,7 +630,7 @@ export default function TwilioSettings({ config, canManageTwilio, latestMigratio
                     </p>
                     <Button 
                       onClick={saveGeoPermissions}
-                      disabled={savingGeo}
+                      disabled={savingGeo || countries.length === 0}
                     >
                       {savingGeo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Save Geo Permissions
