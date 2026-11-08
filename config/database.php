@@ -62,6 +62,44 @@ return [
             ]) : [],
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | Live database (local -> live pushes)
+        |----------------------------------------------------------------------
+        |
+        | Used only by the admin "database push" URL when this application is
+        | running on a development machine: it lets this checkout run its
+        | migration files against the live MySQL database. On the live server
+        | the default connection already is the live database, so these values
+        | are left blank there.
+        |
+        | LIVE_DB_HOST must be the server's REMOTE MySQL hostname. "localhost"
+        | on a development machine resolves to that machine's own MySQL, not
+        | the live server's. cPanel only accepts remote connections after the
+        | connecting IP is whitelisted under "Remote MySQL".
+        |
+        */
+
+        'live' => [
+            'driver' => 'mysql',
+            'url' => env('LIVE_DB_URL'),
+            'host' => env('LIVE_DB_HOST', '127.0.0.1'),
+            'port' => env('LIVE_DB_PORT', '3306'),
+            'database' => env('LIVE_DB_DATABASE', ''),
+            'username' => env('LIVE_DB_USERNAME', ''),
+            'password' => env('LIVE_DB_PASSWORD', ''),
+            'unix_socket' => env('LIVE_DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

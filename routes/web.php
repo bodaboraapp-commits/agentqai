@@ -316,6 +316,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/system-config/live-rates', [App\Http\Controllers\Admin\SystemConfigController::class, 'fetchLiveRates'])->name('system-config.live-rates');
         });
 
+        // Database push: apply pending migrations to this installation's
+        // database (or, with ?database=live, from a dev machine to the live
+        // MySQL database). Deliberately a GET so it can be triggered by
+        // refreshing the URL; gated by auth + role:admin, and by DB_PUSH_KEY
+        // when that is set.
+        Route::get('/db-push', [App\Http\Controllers\Admin\DatabasePushController::class, 'push'])->name('db-push');
+
         // Cron Job Monitoring
         Route::get('/cron-monitor', [App\Http\Controllers\Admin\CronMonitorController::class, 'index'])->name('cron-monitor');
         Route::post('/cron-monitor/cleanup', [App\Http\Controllers\Admin\CronMonitorController::class, 'cleanup'])->name('cron-monitor.cleanup');
