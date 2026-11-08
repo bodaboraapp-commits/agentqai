@@ -10,7 +10,22 @@
 /storage/pail
 # Dated .env snapshots — these contain live credentials, never commit them.
 /storage/backups
-/vendor
+# vendor/ is committed on purpose: this repository is deployed to shared
+# hosting (cPanel) where a git pull must produce a runnable app without
+# Composer or SSH access on the host. Re-enable the ignore if you switch to
+# installing dependencies on the server.
+# /vendor
+# Vendored dependency tests and examples are never used at runtime, and some
+# contain dummy Twilio/Plivo/Stripe credentials that GitHub push protection
+# (correctly) refuses as secrets. Keep them on disk, out of the repository.
+/vendor/*/*/tests/
+/vendor/*/*/Tests/
+/vendor/*/*/example/
+/vendor/*/*/examples/
+/vendor/plivo/plivo-php/src/Examples/
+# Vendored package documentation is not needed at runtime and some of it
+# contains provider sample keys that push protection treats as secrets.
+/vendor/**/*.md
 /zapier/node_modules
 .DS_Store
 .env
@@ -75,3 +90,8 @@ yarn-error.log
 
 # Scratch folder used when frontend bundles are rebuilt locally.
 /.build-tmp
+
+# Vendored package docs are not used at runtime and some contain provider
+# sample keys that GitHub push protection treats as secrets. This must stay
+# after the blanket *.md exceptions above so it wins for vendor/.
+/vendor/**/*.md
