@@ -7,6 +7,13 @@
 # front controller and asset files live.
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Directory requests ("/" itself) arrive here with an empty relative path,
+    # which some Apache builds do not rewrite with the catch-all rule below.
+    # Send them to public/ explicitly so the front controller (and not a
+    # directory listing or 404) answers.
+    RewriteRule ^$ public/ [L]
+
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

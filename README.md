@@ -591,6 +591,43 @@ RAZORPAY_TEST_MODE=true
 
 ---
 
+## SEO, AI discoverability & agentic crawling
+
+The front end is an Inertia SPA, so the initial HTML response is generated
+server-side explicitly (`resources/views/app.blade.php` + `App\Support\Seo`):
+
+- title, description, keywords, canonical URL, robots directives, Open Graph
+  and Twitter cards;
+- a JSON-LD `@graph` — `Organization`, `WebSite`, `WebPage`/`Article`,
+  `SoftwareApplication`, `FAQPage` and `BreadcrumbList` — built from the
+  admin-editable theme settings, capabilities, FAQs and public pages;
+- a `<noscript>` summary (title, description, capabilities, FAQ answers and
+  links) so crawlers that never execute JavaScript — including most AI/agent
+  crawlers — still receive the actual content.
+
+Generated per installation, so there are no static files to keep in sync:
+
+| URL | Purpose |
+|-----|---------|
+| `/robots.txt` | crawl rules, disallows for the authenticated app, explicit allow groups for GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot and friends, plus the sitemap URL |
+| `/sitemap.xml` | home, documentation and every active public page, with `lastmod` |
+| `/llms.txt` | concise markdown for LLMs and agents (the [llms.txt](https://llmstxt.org/) convention): summary, pages, capabilities, pricing, FAQ, API reference and sitemap/robots links |
+
+Authenticated application pages (`/dashboard`, `/settings/*`, `/admin/*` and
+the auth screens) send `X-Robots-Tag: noindex, nofollow`. `public/.htaccess`
+adds gzip compression and long-lived caching for the fingerprinted Vite assets
+(Core Web Vitals).
+
+Set `APP_URL` in `.env` to the public **https** URL — canonical, sitemap and
+robots URLs are built from it. Meta title/description/keywords, the OG image
+and social links are editable under **Admin → Theme**.
+
+Full server-side rendering (Inertia SSR) is intentionally not enabled: it
+requires a long-running Node process that shared cPanel hosting does not
+provide. The JSON-LD and `<noscript>` content cover crawlers without it.
+
+---
+
 ## Deployment
 
 ### VPS / Dedicated Server Deployment

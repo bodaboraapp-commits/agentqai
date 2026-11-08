@@ -38,6 +38,11 @@ Route::get('/documentation', function () {
     return view('documentation');
 })->name('documentation');
 
+// Machine-readable SEO / AI-agent endpoints (generated per installation).
+Route::get('/robots.txt', [App\Http\Controllers\SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [App\Http\Controllers\SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/llms.txt', [App\Http\Controllers\SeoController::class, 'llms'])->name('seo.llms');
+
 // Public legal pages (Privacy Policy, Terms, etc.)
 Route::get('/page/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('page.show');
 

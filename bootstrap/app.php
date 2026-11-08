@@ -11,6 +11,7 @@ use App\Http\Middleware\EnsureTelephonyFeature;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SeoHeaders;
 use App\Http\Middleware\ThrottleApiRequests;
 use App\Http\Middleware\TrustHosts;
 use App\Http\Middleware\UpdateAppUrl;
@@ -82,6 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             SetLocale::class,
+            SeoHeaders::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::using(50),
         ]);
