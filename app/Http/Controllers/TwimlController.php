@@ -580,7 +580,15 @@ class TwimlController extends Controller
         $queueService = app(CallQueueService::class);
         $targetUser = User::find($userId);
 
-        if ($targetUser && $queueService->isUserBusy($targetUser) && $queueService->isQueueEnabled($targetUser)) {
+        // Africa's Talking has no provider-side queue primitive in the XML
+        // this app generates, so its inbound calls must never be enqueued: the
+        // queue XML would be rejected and AT would abort the call, leaving
+        // stale "caller waiting" entries behind. They fall through to the
+        // graceful unavailable message below instead.
+        if ($targetUser
+            && $this->telephony->provider() !== TelephonyProvider::AFRICASTALKING
+            && $queueService->isUserBusy($targetUser)
+            && $queueService->isQueueEnabled($targetUser)) {
             if ($queueService->isQueueFull($targetUser)) {
                 Log::info('Inbound call rejected: queue full', [
                     'user_id' => $userId,

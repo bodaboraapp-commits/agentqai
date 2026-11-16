@@ -330,7 +330,7 @@ class CallController extends Controller
             $validated = $request->validate([
                 'to_number' => ['required', 'string'],
                 'from_number' => ['nullable', 'string'],
-                'number_source' => ['nullable', 'string', 'in:twilio_direct,sip_trunk'],
+                'number_source' => ['nullable', 'string', 'max:50'],
                 'enable_recording' => ['boolean'],
                 'contact_id' => ['nullable', 'integer', 'exists:contacts,id'],
                 'campaign_contact_id' => ['nullable', 'integer', 'exists:campaign_contacts,id'],
