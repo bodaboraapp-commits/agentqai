@@ -34,7 +34,7 @@ Route::middleware('auth')
 Route::prefix('at-xml')->name('at-xml.')->middleware(['throttle:120,1'])->group(function (): void {
     // The single URL an AT number's "Callback" setting must point at.
     Route::match(['get', 'post'], '/session', [AfricaSTalkingSessionController::class, 'session'])
-        ->name('session');
+        ->name('session')->defaults('provider', 'africastalking');
 
     // Per-call call-control documents (AT redirects here from /session).
     Route::match(['get', 'post'], '/campaign/tts', [\App\Http\Controllers\TwimlController::class, 'campaignCallTts'])

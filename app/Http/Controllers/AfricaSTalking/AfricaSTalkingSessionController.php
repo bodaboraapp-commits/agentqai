@@ -82,11 +82,13 @@ class AfricaSTalkingSessionController extends Controller
         }
 
         if ($direction === 'inbound') {
-            return $this->redirectXml(route('at-xml.inbound.call', array_filter([
-                'From' => $from,
-                'To' => $to,
-                'CallSid' => $sessionId,
-            ])));
+            // Answer the AT session callback DIRECTLY with the shared inbound
+            // policy's XML. The Twilio/Plivo path redirects to /inbound-call;
+            // AT does not reliably follow a <Redirect> on the call session and
+            // was terminating the call after ~1s with no instructions. The
+            // shared handler rings the owner's browser client and creates the
+            // inbound Call row exactly as it does for the other providers.
+            return app(\App\Http\Controllers\TwimlController::class)->inboundCall($request);
         }
 
         $call = $this->resolveCall(
