@@ -81,10 +81,16 @@ class CallController extends Controller
         $userId = $user->id;
 
         try {
-            // Get numbers assigned to AI agents (to exclude from softphone)
-            $aiAgentNumbers = AiAgent::whereNotNull('phone_number')
-                ->pluck('phone_number')
-                ->toArray();
+            $provider = app(\App\Services\Telephony\TelephonyManager::class)->provider();
+
+            // Numbers bound to an AI agent are hidden from the human softphone
+            // on providers that support AI voice agents. AT has no real-time
+            // media streaming, so AI voice agents cannot run there: applying
+            // that exclusion on AT hid the only assigned number from the
+            // dialer even though the number page showed it as assigned.
+            $aiAgentNumbers = $provider === \App\Enums\TelephonyProvider::AFRICASTALKING
+                ? []
+                : AiAgent::whereNotNull('phone_number')->pluck('phone_number')->toArray();
 
             // Get all phone numbers assigned to this user from phone_numbers table
             // This includes both twilio_direct and sip_trunk source numbers
