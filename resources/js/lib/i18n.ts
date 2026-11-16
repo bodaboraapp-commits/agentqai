@@ -4,6 +4,8 @@ import { initReactI18next } from 'react-i18next';
 i18n.use(initReactI18next).init({
     fallbackLng: 'en',
     defaultNS: 'translation',
+    // i18next v25 prints a Locize support banner to the console on init.
+    showSupportNotice: false,
     interpolation: {
         escapeValue: false, // React already escapes
     },

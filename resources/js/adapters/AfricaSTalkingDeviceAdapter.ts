@@ -166,7 +166,15 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
 
     console.info('[AT] initialising client', { tokenPrefix: token.slice(0, 10) });
     const AT = await loadAtSdk();
-    this.client = new AT.Client(token);
+    // Self-hosted tones: the SDK's default ringing/dialing MP3s come from
+    // res.cloudinary.com, which browser tracking-prevention blocks (and which
+    // would be a third-party dependency anyway). Same-origin copies avoid both.
+    this.client = new AT.Client(token, {
+      sounds: {
+        ringing: '/sounds/at-ringing.mp3',
+        dialing: '/sounds/at-dialing.mp3',
+      },
+    });
     this.registered = false;
 
     await new Promise<void>((resolve, reject) => {
