@@ -6,12 +6,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Telephony\LockTelephonyProviderAction;
 use App\Actions\Telephony\ResetTelephonyProviderAction;
+use App\Actions\Telephony\SwitchTelephonyProviderAction;
 use App\Enums\TelephonyProvider;
 use App\Exceptions\Telephony\AlreadyLockedException;
 use App\Exceptions\Telephony\TelephonyResetRefusedException;
 use App\Http\Controllers\Controller;
+use App\Models\PhoneNumber;
 use App\Models\TelephonyProviderConfig;
 use App\Models\TelephonyProviderReset;
+use App\Models\TwilioCredential;
+use App\Models\TwilioGlobalConfig;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingVoiceProvider;
 use App\Services\Telephony\Plivo\PlivoApplicationProvisioner;
 use App\Services\Telephony\Plivo\PlivoVoiceProvider;
 use App\Services\Telephony\TelephonyLock;
@@ -49,6 +54,7 @@ final class TelephonySettingsController extends Controller
         private readonly TelephonyLock $lock,
         private readonly PlivoVoiceProvider $plivoVoiceProvider,
         private readonly PlivoApplicationProvisioner $plivoApplicationProvisioner,
+        private readonly AfricaSTalkingVoiceProvider $africaSTalkingVoiceProvider,
     ) {}
 
     /**
@@ -73,6 +79,13 @@ final class TelephonySettingsController extends Controller
                 'settingsUrl' => route('twilio.settings'),
             ] : null,
             'plivo' => $provider === TelephonyProvider::PLIVO ? $this->plivoProps() : null,
+            // Africa's Talking card: shown when it is the active provider, or
+            // when it is enabled / already configured so an admin can prepare
+            // it and switch to it.
+            'africastalking' => $this->africaSTalkingProps($provider),
+            // Other providers the admin can switch to without a destructive
+            // reset (this page is the only place that knows both).
+            'switchTargets' => $provider !== null ? $this->switchTargets($provider) : [],
             // Where an admin goes to pick a provider when none is locked.
             // Sent as a prop rather than hardcoded in the page so this
             // controller stays the single owner of the chooser's location.
@@ -340,6 +353,96 @@ final class TelephonySettingsController extends Controller
         return back()->with('success', $message);
     }
 
+    /**
+     * Save Africa's Talking credentials without requiring the installation to
+     * be locked to AT yet: an admin prepares the account here, verifies it,
+     * and only then switches. Always clears verified_at — "verified" must mean
+     * "verified since this exact save".
+     */
+    public function storeAfricaSTalkingCredentials(Request $request): RedirectResponse
+    {
+        $request->merge([
+            'username' => $this->trimmedInput($request, 'username'),
+            'api_key' => $this->trimmedInput($request, 'api_key'),
+        ]);
+
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'max:191'],
+            'api_key' => ['required', 'string', 'max:191'],
+        ]);
+
+        $config = TelephonyProviderConfig::forProvider(TelephonyProvider::AFRICASTALKING);
+        $credentials = $config->credentials ?? [];
+        $credentials['username'] = $validated['username'];
+        $credentials['api_key'] = $validated['api_key'];
+
+        $config->update(['credentials' => $credentials, 'verified_at' => null]);
+
+        return back()->with('success', 'Africa\'s Talking credentials saved. Verify them to confirm they work.');
+    }
+
+    /**
+     * Verify the stored AT username/API key against the live AT user endpoint.
+     * Takes no input, so a request can never verify credentials other than the
+     * ones that were saved.
+     */
+    public function verifyAfricaSTalking(): RedirectResponse
+    {
+        $config = TelephonyProviderConfig::forProvider(TelephonyProvider::AFRICASTALKING);
+        $username = $config->credential('username');
+        $apiKey = $config->credential('api_key');
+
+        if ($username === null || $apiKey === null) {
+            return back()->with('error', 'Save your Africa\'s Talking username and API key before verifying.');
+        }
+
+        $result = $this->africaSTalkingVoiceProvider->verifyCredentials([
+            'username' => $username,
+            'api_key' => $apiKey,
+        ]);
+
+        if ($result['valid'] !== true) {
+            $reason = str_replace($apiKey, '[redacted]', (string) ($result['error'] ?? 'Unknown error.'));
+
+            return back()->with('error', "Africa's Talking verification failed: {$reason}");
+        }
+
+        $config->markVerified();
+
+        $message = 'Africa\'s Talking credentials verified successfully.';
+        if (! empty($result['account_name'])) {
+            $message .= " {$result['account_name']}.";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Switch the active provider without destroying configuration
+     * (SwitchTelephonyProviderAction) — unlike reset(), both providers keep
+     * their credentials so the admin can switch back.
+     */
+    public function switchProvider(Request $request, SwitchTelephonyProviderAction $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'provider' => ['required', 'string', Rule::in(array_column(TelephonyProvider::selectable(), 'value'))],
+            'force' => ['sometimes', 'boolean'],
+        ]);
+
+        $target = TelephonyProvider::from($validated['provider']);
+
+        try {
+            $action->execute($target, $request->user(), (bool) ($validated['force'] ?? false));
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (LockTimeoutException) {
+            return back()->with('error', 'Another request is still finishing this change. Please try again.');
+        }
+
+        return redirect()->route('admin.telephony.index')
+            ->with('success', "This installation is now using {$target->label()}.");
+    }
+
     private function isPlivoLocked(): bool
     {
         return $this->lock->current() === TelephonyProvider::PLIVO;
@@ -388,6 +491,76 @@ final class TelephonySettingsController extends Controller
             'urlsOutOfDate' => $provisionedUrls !== null
                 && $provisionedUrls !== $this->plivoApplicationProvisioner->currentUrls(),
         ];
+    }
+
+    /**
+     * Africa's Talking card state. Shown when AT is active, enabled, or
+     * already configured, so an admin can prepare it before switching.
+     *
+     * @return array{username: ?string, hasApiKey: bool, verifiedAt: ?string, enabled: bool, active: bool, switchUrl: string, storeUrl: string, verifyUrl: string, callbackUrl: string, eventsUrl: string}|null
+     */
+    private function africaSTalkingProps(?TelephonyProvider $active): ?array
+    {
+        $enabled = TelephonyProvider::AFRICASTALKING->isSelectable();
+        $config = TelephonyProviderConfig::where('name', TelephonyProvider::AFRICASTALKING->value)->first();
+        $configured = $config?->credential('username') !== null && $config?->credential('api_key') !== null;
+
+        if (! $enabled && ! $configured) {
+            return null;
+        }
+
+        return [
+            'username' => $config?->credential('username'),
+            'hasApiKey' => $config?->credential('api_key') !== null,
+            'verifiedAt' => $config?->verified_at?->toDateTimeString(),
+            'enabled' => $enabled,
+            'active' => $active === TelephonyProvider::AFRICASTALKING,
+            'switchUrl' => route('admin.telephony.switch'),
+            'storeUrl' => route('admin.telephony.africastalking.credentials.store'),
+            'verifyUrl' => route('admin.telephony.africastalking.verify'),
+            'callbackUrl' => route('at-xml.session'),
+            'eventsUrl' => route('webhooks.africastalking.events'),
+        ];
+    }
+
+    /**
+     * Other selectable providers this installation can switch to, with whether
+     * each is ready. SwitchTelephonyProviderAction re-checks all of this
+     * server-side; the flag only disables the button in the UI.
+     *
+     * @return list<array{value: string, label: string, configured: bool, switchUrl: string}>
+     */
+    private function switchTargets(TelephonyProvider $active): array
+    {
+        $targets = [];
+
+        foreach (TelephonyProvider::selectable() as $candidate) {
+            if ($candidate === $active) {
+                continue;
+            }
+
+            $targets[] = [
+                'value' => $candidate->value,
+                'label' => $candidate->label(),
+                'configured' => $this->providerIsConfigured($candidate),
+                'switchUrl' => route('admin.telephony.switch'),
+            ];
+        }
+
+        return $targets;
+    }
+
+    private function providerIsConfigured(TelephonyProvider $provider): bool
+    {
+        $config = TelephonyProviderConfig::where('name', $provider->value)->first();
+
+        return match ($provider) {
+            TelephonyProvider::AFRICASTALKING => $config?->verified_at !== null,
+            TelephonyProvider::PLIVO => $config?->credential('auth_id') !== null
+                && $config?->credential('auth_token') !== null,
+            TelephonyProvider::TWILIO => TwilioGlobalConfig::query()->exists()
+                || TwilioCredential::query()->exists(),
+        };
     }
 
     /**

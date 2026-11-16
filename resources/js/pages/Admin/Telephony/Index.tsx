@@ -21,10 +21,33 @@ import { FormEvent, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle, ExternalLink, Eye, EyeOff, Loader2, Phone, ShieldQuestion } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
 
-type ProviderName = 'twilio' | 'plivo';
+type ProviderName = 'twilio' | 'plivo' | 'africastalking';
 
 interface TwilioBranch {
   settingsUrl: string;
+}
+
+interface AfricaSTalkingBranch {
+  username: string | null;
+  hasApiKey: boolean;
+  verifiedAt: string | null;
+  /** False until AFRICASTALKING_ENABLED=true — the switch is refused server-side too. */
+  enabled: boolean;
+  active: boolean;
+  switchUrl: string;
+  storeUrl: string;
+  verifyUrl: string;
+  /** AT number-level call session callback the admin must paste into the AT dashboard. */
+  callbackUrl: string;
+  /** AT number-level events callback. */
+  eventsUrl: string;
+}
+
+interface SwitchTarget {
+  value: ProviderName;
+  label: string;
+  configured: boolean;
+  switchUrl: string;
 }
 
 interface PlivoBranch {
@@ -49,6 +72,10 @@ interface Props {
   locked: boolean;
   twilio: TwilioBranch | null;
   plivo: PlivoBranch | null;
+  /** Africa's Talking card; null when the provider is disabled and unconfigured. */
+  africastalking: AfricaSTalkingBranch | null;
+  /** Other configured providers this installation can switch to (non-destructive). */
+  switchTargets: SwitchTarget[];
   /** The exact word the admin must type to arm the reset. Null when nothing is locked. */
   resetConfirmationWord: string | null;
   /** Where to go to pick a provider. Only sent when nothing is locked. */
@@ -83,6 +110,8 @@ export default function TelephonySettings({
   locked,
   twilio,
   plivo,
+  africastalking,
+  switchTargets,
   resetConfirmationWord,
   chooseUrl,
 }: Props) {
@@ -153,6 +182,56 @@ export default function TelephonySettings({
       onFinish: () => setVerifying(false),
     });
   };
+
+  // ── Africa's Talking ───────────────────────────────────────────────────
+  const [atVerifying, setAtVerifying] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const {
+    data: atData,
+    setData: setAtData,
+    post: atPost,
+    processing: atProcessing,
+    errors: atErrors,
+  } = useForm({
+    username: '',
+    api_key: '',
+  });
+
+  const handleAtSave = (e: FormEvent) => {
+    e.preventDefault();
+    if (!africastalking) return;
+    atPost(africastalking.storeUrl, {
+      preserveScroll: true,
+      onSuccess: () => setAtData('api_key', ''),
+    });
+  };
+
+  const handleAtVerify = () => {
+    if (!africastalking) return;
+    setAtVerifying(true);
+    router.post(africastalking.verifyUrl, {}, {
+      preserveScroll: true,
+      onFinish: () => setAtVerifying(false),
+    });
+  };
+
+  const handleSwitch = (target: SwitchTarget) => {
+    if (!target.configured) return;
+    setSwitching(target.value);
+    router.post(target.switchUrl, { provider: target.value }, {
+      preserveScroll: true,
+      onFinish: () => setSwitching(null),
+    });
+  };
+
+  const atSwitchTarget: SwitchTarget | null = africastalking
+    ? {
+        value: 'africastalking',
+        label: "Africa's Talking",
+        configured: africastalking.verifiedAt !== null,
+        switchUrl: africastalking.switchUrl,
+      }
+    : null;
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -348,6 +427,159 @@ export default function TelephonySettings({
               </CardContent>
             </Card>
           </>
+        )}
+
+        {africastalking && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="h-5 w-5" />
+                  Africa&apos;s Talking
+                  {africastalking.active ? (
+                    <Badge variant="default">{t('admin.telephony.locked_badge')}</Badge>
+                  ) : (
+                    <Badge variant="outline">Available</Badge>
+                  )}
+                  {africastalking.verifiedAt ? (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {t('admin.telephony.verified_badge')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">{t('admin.telephony.not_verified_badge')}</Badge>
+                  )}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAtVerify}
+                    disabled={atVerifying || !africastalking.hasApiKey}
+                  >
+                    {atVerifying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {t('common.verify')}
+                  </Button>
+                  {!africastalking.active && atSwitchTarget && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleSwitch(atSwitchTarget)}
+                      disabled={switching !== null || !atSwitchTarget.configured || !africastalking.enabled}
+                    >
+                      {switching === 'africastalking' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Switch to Africa&apos;s Talking
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <CardDescription>
+                Outbound campaigns, AT XML call flows and callbacks. Real-time AI voice agents and the browser
+                softphone are not available on this provider.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Username</p>
+                  <p className="font-mono text-sm">{africastalking.username ?? t('admin.telephony.not_set')}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">API key</p>
+                  <p className="font-mono text-sm">
+                    {africastalking.hasApiKey ? t('admin.telephony.auth_token_stored') : t('admin.telephony.not_set')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-md border p-3 text-sm space-y-1">
+                <p className="font-medium">
+                  Paste these into Africa&apos;s Talking (Voice → Phone Numbers → your number → Actions)
+                </p>
+                <p>
+                  Callback URL: <span className="font-mono break-all">{africastalking.callbackUrl}</span>
+                </p>
+                <p>
+                  Events URL: <span className="font-mono break-all">{africastalking.eventsUrl}</span>
+                </p>
+              </div>
+
+              {!africastalking.enabled && (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle>Africa&apos;s Talking is disabled</AlertTitle>
+                  <AlertDescription>
+                    Set <span className="font-mono">AFRICASTALKING_ENABLED=true</span> in <span className="font-mono">.env</span>{' '}
+                    and clear the config cache before it can be selected or switched to.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handleAtSave} className="space-y-3 pt-2 border-t">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="at_username">Username</Label>
+                    <Input
+                      id="at_username"
+                      value={atData.username}
+                      onChange={(e) => setAtData('username', e.target.value)}
+                      placeholder="AgentQ_AI"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="at_api_key">API key</Label>
+                    <Input
+                      id="at_api_key"
+                      type="password"
+                      value={atData.api_key}
+                      onChange={(e) => setAtData('api_key', e.target.value)}
+                      placeholder="atsk_..."
+                      required
+                    />
+                  </div>
+                </div>
+                {atErrors.username && <p className="text-sm text-destructive">{atErrors.username}</p>}
+                {atErrors.api_key && <p className="text-sm text-destructive">{atErrors.api_key}</p>}
+                <Button type="submit" disabled={atProcessing}>
+                  {atProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Africa&apos;s Talking credentials
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {provider !== null && switchTargets.filter((t) => t.value !== 'africastalking').length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Switch provider</CardTitle>
+              <CardDescription>
+                Move this installation to another configured provider without deleting either configuration —
+                credentials for both stay saved, so you can switch back. Running campaigns and calls must finish first.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {switchTargets
+                .filter((t) => t.value !== 'africastalking')
+                .map((target) => (
+                  <div key={target.value} className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <p className="font-medium">{target.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {target.configured ? 'Ready to switch' : 'Not configured yet'}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={!target.configured || switching !== null}
+                      onClick={() => handleSwitch(target)}
+                    >
+                      {switching === target.value && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Switch to {target.label}
+                    </Button>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
         )}
 
         {locked && resetConfirmationWord && (

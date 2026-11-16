@@ -105,9 +105,10 @@ return [
         // geo-permission product, no carrier/BYOC/SIP-trunk API, no Twilio
         // console and no account-migration tooling. The browser softphone
         // (webrtc_token) and call-hold are phase 2 and hidden until wired.
-        // SMS is supported by AT and is implemented in phase 2; until then the
-        // provider is not selectable (config/africastalking.php 'enabled').
-        'africastalking' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'webrtc_token', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats'],
+        // Numbers are provisioned in the AT dashboard (KYC) and registered with
+        // `php artisan telephony:africastalking --number=…`, so the Twilio/Plivo
+        // number-search console is hidden rather than broken.
+        'africastalking' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'webrtc_token', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats', 'phone_numbers'],
     ],
 
 ];

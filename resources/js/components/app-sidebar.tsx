@@ -387,7 +387,10 @@ const useMainNavItems = (): NavItem[] => {
                     title: t('nav.number_inventory'),
                     href: '/admin/numbers',
                     icon: PhoneIncoming,
-                    visible: isAdmin(),
+                    // Africa's Talking numbers are provisioned in its dashboard;
+                    // the provider has no search/purchase API, so the inventory
+                    // console is hidden rather than erroring.
+                    visible: isAdmin() && !isHidden('phone_numbers', hidden),
                 },
                 {
                     title: t('nav.number_requests'),

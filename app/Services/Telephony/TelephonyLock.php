@@ -184,6 +184,58 @@ final class TelephonyLock
     }
 
     /**
+     * Move the installation's lock to another provider WITHOUT destroying
+     * either provider's stored configuration — the safe counterpart to the
+     * destructive reset flow. Every row keeps its credentials and settings;
+     * only locked_at/locked_by_user_id move.
+     *
+     * Atomic (single mutex + transaction), because release()-then-lock()
+     * would leave a window where the installation is unlocked.
+     *
+     * @throws LockTimeoutException if the mutex cannot be acquired in time.
+     */
+    public function switchTo(TelephonyProvider $provider, ?int $byUserId = null): TelephonyProviderConfig
+    {
+        $config = Cache::lock(self::MUTEX_KEY, self::MUTEX_TTL_SECONDS)->block(
+            self::MUTEX_WAIT_SECONDS,
+            function () use ($provider, $byUserId) {
+                return DB::transaction(function () use ($provider, $byUserId) {
+                    // Unlock every other provider first. Query-builder update on
+                    // purpose: the model's saving() guard is a backstop for
+                    // instance saves, and unlocking is explicitly allowed.
+                    TelephonyProviderConfig::query()
+                        ->whereNotNull('locked_at')
+                        ->where('name', '!=', $provider->value)
+                        ->lockForUpdate()
+                        ->get();
+
+                    TelephonyProviderConfig::query()
+                        ->whereNotNull('locked_at')
+                        ->where('name', '!=', $provider->value)
+                        ->update(['locked_at' => null, 'locked_by_user_id' => null]);
+
+                    $config = TelephonyProviderConfig::query()
+                        ->where('name', $provider->value)
+                        ->lockForUpdate()
+                        ->first() ?? new TelephonyProviderConfig(['name' => $provider->value]);
+
+                    if (! $config->isLocked()) {
+                        $config->locked_at = now();
+                        $config->locked_by_user_id = $byUserId;
+                        $config->save();
+                    }
+
+                    return $config;
+                });
+            }
+        );
+
+        Cache::forget(self::CACHE_KEY);
+
+        return $config;
+    }
+
+    /**
      * Unlock the installation. Only locked_at is cleared — credentials,
      * settings, and who last locked it are left alone for the admin reset
      * flow (or a future lock() call) to read or overwrite as it goes on.

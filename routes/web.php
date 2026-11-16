@@ -339,6 +339,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/credentials', [App\Http\Controllers\Admin\TelephonySettingsController::class, 'storeCredentials'])->name('credentials.store');
             Route::post('/verify', [App\Http\Controllers\Admin\TelephonySettingsController::class, 'verify'])->name('verify');
 
+            // Africa's Talking can be prepared and verified while the
+            // installation is still locked to Twilio/Plivo, and then switched
+            // to. A switch moves the lock only — it is NOT the destructive
+            // reset below: every provider keeps its saved credentials so the
+            // admin can switch back.
+            Route::post('/africastalking/credentials', [App\Http\Controllers\Admin\TelephonySettingsController::class, 'storeAfricaSTalkingCredentials'])->name('africastalking.credentials.store');
+            Route::post('/africastalking/verify', [App\Http\Controllers\Admin\TelephonySettingsController::class, 'verifyAfricaSTalking'])->name('africastalking.verify');
+            Route::post('/switch', [App\Http\Controllers\Admin\TelephonySettingsController::class, 'switchProvider'])->name('switch');
+
             // Changing the locked provider: the destructive reset, then
             // the chooser it lands on. The chooser renders the installer's
             // provider-step component at an admin route — an installed
