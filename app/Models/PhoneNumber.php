@@ -343,7 +343,14 @@ class PhoneNumber extends Model
     public function scopeProvisioned($query)
     {
         return $query->where(function ($q) {
-            $q->whereNotNull('twilio_sid')->orWhereNotNull('provider_number_sid');
+            $q->whereNotNull('twilio_sid')
+                ->orWhereNotNull('provider_number_sid')
+                // Africa's Talking numbers are provisioned in the AT dashboard
+                // and registered here without any provider SID (AT has no
+                // local provisioning API). They are still real, callable
+                // numbers — without this arm the campaign and AI-agent number
+                // pickers stayed empty on every AT installation.
+                ->orWhere('provider', 'africastalking');
         });
     }
 }
