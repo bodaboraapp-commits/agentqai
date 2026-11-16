@@ -46,6 +46,40 @@ class AfricaSTalkingSessionController extends Controller
         $from = $payload['From'] ?? null;
         $to = $payload['To'] ?? null;
 
+        // AT reports a browser-originated call as direction=Inbound, with the
+        // WebRTC client identity as caller (e.g. "AgentQ_AI.user_12") and our
+        // AT number as destination — the client dialled a destination, not us.
+        // The pending outbound Call row the softphone created a moment ago
+        // holds that destination. Routing this to the inbound handler made AT
+        // ring the client back into its own number and abort after 1s.
+        if (($clientUserId = $this->clientUserIdFromCaller($from)) !== null) {
+            $call = Call::query()
+                ->where('provider', 'africastalking')
+                ->where('direction', 'outbound')
+                ->whereIn('status', ['initiated', 'ringing'])
+                ->where('user_id', $clientUserId)
+                ->where('created_at', '>=', now()->subMinutes(15))
+                ->latest('id')
+                ->first();
+
+            if ($call !== null) {
+                if ($sessionId !== '' && $call->shouldAdoptProviderCallId((string) $call->twilio_call_sid)) {
+                    $call->update([
+                        'twilio_call_sid' => $sessionId,
+                        'provider_call_sid' => $sessionId,
+                        'provider' => 'africastalking',
+                        'status' => 'ringing',
+                    ]);
+                }
+
+                return $this->redirectXml(route('at-xml.manual.call', array_filter([
+                    'call_id' => $call->id,
+                    'From' => $from,
+                    'To' => $call->to_number,
+                ])));
+            }
+        }
+
         if ($direction === 'inbound') {
             return $this->redirectXml(route('at-xml.inbound.call', array_filter([
                 'From' => $from,
@@ -164,6 +198,24 @@ class AfricaSTalkingSessionController extends Controller
             'Digits' => $value('Digits', 'digits', 'dtmfDigits'),
             'call_id' => $value('clientRequestId'),
         ], static fn (?string $value): bool => $value !== null && $value !== '');
+    }
+
+    /**
+     * The user id behind an AT WebRTC client identity. AT reports the caller
+     * as "{appUsername}.{clientName}" (e.g. "AgentQ_AI.user_12"); token
+     * identities are "user_{id}". Real phone numbers never match.
+     */
+    private function clientUserIdFromCaller(?string $from): ?int
+    {
+        if ($from === null || $from === '') {
+            return null;
+        }
+
+        if (preg_match('/(?:^|[.:])user_(\d+)$/', $from, $matches)) {
+            return (int) $matches[1];
+        }
+
+        return null;
     }
 
     private function resolveCall(?string $clientRequestId, string $sessionId, ?string $from, ?string $to): ?Call

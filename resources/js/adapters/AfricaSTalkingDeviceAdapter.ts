@@ -211,8 +211,20 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       }, false);
 
       this.client.on('calling', () => {
+        console.info('[AT] calling — waiting for the AT network to answer/route the call');
         if (this.activeCall) this.activeCall.status = 'dialing';
         this.emit('calling');
+      }, false);
+
+      this.client.on('notready', () => {
+        console.warn('[AT] client notready — registration lost');
+        this.registered = false;
+        this.emit('unregistered');
+      }, false);
+
+      this.client.on('missedcall', (info: any) => {
+        console.warn('[AT] missedcall:', info);
+        this.emit('missedcall', info);
       }, false);
 
       this.client.on('error', (error: any) => {
@@ -222,11 +234,16 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       }, false);
 
       this.client.on('callaccepted', () => {
+        console.info('[AT] callaccepted');
         if (this.activeCall) this.activeCall.status = 'connected';
         this.emit('callaccepted');
       }, false);
 
       this.client.on('hangup', (cause: any) => {
+        // AT sends {code, reason} here. This is the authoritative diagnosis
+        // for a call that never rings the destination: 404/403/480/486-style
+        // codes point at routing/account/number config, local ones at media.
+        console.warn('[AT] hangup:', cause ? JSON.stringify(cause) : '(no cause)', cause?.code, cause?.reason);
         const call = this.activeCall;
         this.activeCall = null;
         if (call) {
