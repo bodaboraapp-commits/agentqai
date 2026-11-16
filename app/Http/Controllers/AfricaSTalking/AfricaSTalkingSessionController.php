@@ -46,6 +46,25 @@ class AfricaSTalkingSessionController extends Controller
         $from = $payload['From'] ?? null;
         $to = $payload['To'] ?? null;
 
+        // AT calls this URL for the WHOLE life of the call, not just when it
+        // rings: the final callback has callSessionState=Completed (with
+        // dialDestinationNumber / dialDurationInSeconds / hangupCause). That is
+        // a terminal notification, not a new call to bridge — answering it with
+        // a fresh <Dial> re-dialled the destination. Record the outcome and
+        // return an empty document instead.
+        $state = strtolower((string) (
+            $request->input('callSessionState')
+            ?? $request->input('CallSessionState')
+            ?? $request->input('call_session_state')
+            ?? ''
+        ));
+
+        if (in_array($state, ['completed', 'failed', 'busy', 'noanswer', 'no-answer', 'cancelled', 'canceled'], true)) {
+            $this->applyTerminalSessionState($state, $from, $to, $request);
+
+            return $this->xml('<Response/>');
+        }
+
         // AT reports a browser-originated call as direction=Inbound, with the
         // WebRTC client identity as caller (e.g. "AgentQ_AI.user_12") and our
         // AT number as destination — the client dialled a destination, not us.
@@ -262,6 +281,54 @@ class AfricaSTalkingSessionController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Record the call outcome carried by AT's terminal session callback.
+     */
+    private function applyTerminalSessionState(string $state, ?string $from, ?string $to, \Illuminate\Http\Request $request): void
+    {
+        $clientUserId = $this->clientUserIdFromCaller($from);
+
+        $query = Call::query()
+            ->where('provider', 'africastalking')
+            ->where('direction', 'outbound')
+            ->whereIn('status', ['initiated', 'ringing', 'in-progress'])
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->latest('id');
+
+        if ($clientUserId !== null) {
+            $query->where('user_id', $clientUserId);
+        } elseif ($to !== null) {
+            $query->where('from_number', $to);
+        } else {
+            return;
+        }
+
+        $call = $query->first();
+
+        if ($call === null) {
+            return;
+        }
+
+        $duration = $request->input('dialDurationInSeconds')
+            ?? $request->input('durationInSeconds')
+            ?? $request->input('duration');
+
+        $call->forceFill([
+            'status' => $state === 'completed' ? 'completed' : 'failed',
+            'duration_seconds' => is_numeric($duration) ? (int) $duration : $call->duration_seconds,
+            'ended_at' => now(),
+            'error_message' => $state === 'completed' ? null : ucfirst($state),
+        ])->save();
+
+        \Illuminate\Support\Facades\Log::info('AT session: terminal state applied', [
+            'call_id' => $call->id,
+            'state' => $state,
+            'duration' => $duration,
+            'hangup_cause' => $request->input('hangupCause'),
+            'dial_destination' => $request->input('dialDestinationNumber'),
+        ]);
     }
 
     private function resolveCall(?string $clientRequestId, string $sessionId, ?string $from, ?string $to): ?Call
