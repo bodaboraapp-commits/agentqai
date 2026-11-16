@@ -1633,7 +1633,9 @@ class TwimlController extends Controller
      */
     private function webhookNumber(?string $value, string $provider): ?string
     {
-        if ($value === null || $provider === 'twilio') {
+        // Twilio and Africa's Talking both send E.164 numbers with the
+        // leading '+'; only Plivo strips it.
+        if ($value === null || in_array($provider, ['twilio', 'africastalking'], true)) {
             return $value;
         }
 
@@ -1654,6 +1656,13 @@ class TwimlController extends Controller
 
         if ($provider === 'twilio') {
             return str_starts_with($from, 'client:');
+        }
+
+        // Africa's Talking's browser client is handled by its own SDK and is
+        // not wired into this softphone; an AT call is never browser-originated
+        // here.
+        if ($provider === 'africastalking') {
+            return false;
         }
 
         // Not a bare "sip:" test. Which form Plivo presents an Endpoint in on
@@ -1790,7 +1799,11 @@ class TwimlController extends Controller
      */
     private function callbackRoute(string $provider, string $suffix, array $params = []): string
     {
-        $name = $provider === 'twilio' ? "webhooks.twilio.{$suffix}" : "webhooks.plivo.{$suffix}";
+        $name = match ($provider) {
+            'twilio' => "webhooks.twilio.{$suffix}",
+            'africastalking' => "webhooks.africastalking.{$suffix}",
+            default => "webhooks.plivo.{$suffix}",
+        };
 
         return route($name, $params);
     }
@@ -1906,7 +1919,11 @@ class TwimlController extends Controller
 
     private function dialCompleteRoute(string $provider, int $callId): string
     {
-        $name = $provider === 'twilio' ? 'twiml.dial-complete' : 'plivo-xml.dial-complete';
+        $name = match ($provider) {
+            'twilio' => 'twiml.dial-complete',
+            'africastalking' => 'at-xml.dial-complete',
+            default => 'plivo-xml.dial-complete',
+        };
 
         return route($name, ['call' => $callId]);
     }

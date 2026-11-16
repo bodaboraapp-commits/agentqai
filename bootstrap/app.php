@@ -43,6 +43,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             Route::middleware('web')
                 ->group(base_path('routes/kyc.php'));
+
+            // Africa's Talking call session + events callbacks (public: the
+            // provider fetches these, like the Twilio/Plivo callback groups).
+            Route::middleware('web')
+                ->group(base_path('routes/africastalking.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -60,6 +65,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhooks/twilio/*',
             'webhooks/plivo/*',
+            // Africa's Talking callbacks (AT posts without a CSRF token).
+            'webhooks/africastalking/*',
+            'at-xml/*',
             'webhooks/payment/*',
             'twiml/*',
             'plivo-xml/*',

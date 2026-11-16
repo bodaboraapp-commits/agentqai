@@ -151,6 +151,9 @@ class MakeCampaignCallJob implements ShouldQueue
             if ($provider === TelephonyProvider::PLIVO) {
                 $credentials = $this->resolvePlivoCredentials();
                 $statusCallbackUrl = route('webhooks.plivo.call.status', ['call_id' => $call->id]);
+            } elseif ($provider === TelephonyProvider::AFRICASTALKING) {
+                $credentials = $this->resolveAfricaSTalkingCredentials();
+                $statusCallbackUrl = route('webhooks.africastalking.call.status', ['call_id' => $call->id]);
             } else {
                 $twilioService->initializeForUser($this->campaign->user);
                 $credential = $twilioService->getCredential();
@@ -169,6 +172,10 @@ class MakeCampaignCallJob implements ShouldQueue
                 [
                     'statusCallback' => $statusCallbackUrl,
                     'record' => $this->campaign->enable_recording,
+                    // Africa's Talking echoes this back on its events callback
+                    // so the session can be matched to this Call row; other
+                    // providers ignore it.
+                    'clientRequestId' => $call->id,
                 ]
             );
 
@@ -347,7 +354,11 @@ class MakeCampaignCallJob implements ShouldQueue
      */
     private function prepareCallParameters(int $callId, TelephonyProvider $provider): array
     {
-        $prefix = $provider === TelephonyProvider::PLIVO ? 'plivo-xml.' : 'twiml.';
+        $prefix = match ($provider) {
+            TelephonyProvider::PLIVO => 'plivo-xml.',
+            TelephonyProvider::AFRICASTALKING => 'at-xml.',
+            default => 'twiml.',
+        };
 
         // Check if campaign has AI agent assigned
         if ($this->campaign->ai_agent_id) {
@@ -384,6 +395,25 @@ class MakeCampaignCallJob implements ShouldQueue
         }
 
         return ['auth_id' => $authId, 'auth_token' => $authToken];
+    }
+
+    /**
+     * This installation's one configured Africa's Talking account
+     * (TelephonyProviderConfig, name 'africastalking'), read-only.
+     *
+     * @return array<string, string>
+     */
+    private function resolveAfricaSTalkingCredentials(): array
+    {
+        $config = TelephonyProviderConfig::where('name', 'africastalking')->first();
+        $username = $config?->credential('username');
+        $apiKey = $config?->credential('api_key');
+
+        if (! $username || ! $apiKey) {
+            throw new \Exception('Africa\'s Talking is not configured for this platform. Ask an administrator to configure it in Admin → Telephony.');
+        }
+
+        return ['username' => $username, 'api_key' => $apiKey];
     }
 
     /**

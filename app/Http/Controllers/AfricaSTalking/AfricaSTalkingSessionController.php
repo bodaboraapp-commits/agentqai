@@ -1,0 +1,216 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\AfricaSTalking;
+
+use App\Actions\Calls\RecordDtmfAction;
+use App\Actions\Calls\UpdateCallStatusAction;
+use App\Http\Controllers\CallController;
+use App\Http\Controllers\Controller;
+use App\Models\Call;
+use App\Services\Telephony\TelephonyManager;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+/**
+ * Africa's Talking call session + events callbacks.
+ *
+ * AT's number-level Callback URL is fixed in their dashboard, so this is the
+ * single entry point for both inbound calls and the answer step of an
+ * outbound call. It matches the request to a Call row and redirects AT to the
+ * per-call XML endpoint the shared TwimlController already serves (AT supports
+ * <Redirect>), keeping all campaign/inbound XML logic in one place.
+ *
+ * Matching order: clientRequestId (sent when placing the call) → the AT
+ * session id (a retry/redirect of the same call) → the newest initiated
+ * outbound call with this From/To pair (AT does not echo clientRequestId on
+ * the call-session callback, only on events).
+ */
+class AfricaSTalkingSessionController extends Controller
+{
+    public function __construct(private readonly TelephonyManager $telephony) {}
+
+    public function session(Request $request): Response
+    {
+        $payload = $this->payload($request);
+        $request->merge($payload);
+
+        $sessionId = (string) ($payload['CallSid'] ?? '');
+        $direction = strtolower((string) ($payload['Direction'] ?? ''));
+        $from = $payload['From'] ?? null;
+        $to = $payload['To'] ?? null;
+
+        if ($direction === 'inbound') {
+            return $this->redirectXml(route('at-xml.inbound.call', array_filter([
+                'From' => $from,
+                'To' => $to,
+                'CallSid' => $sessionId,
+            ])));
+        }
+
+        $call = $this->resolveCall(
+            isset($payload['call_id']) ? (string) $payload['call_id'] : null,
+            $sessionId,
+            $from,
+            $to
+        );
+
+        if ($call === null) {
+            return $this->errorXml('We could not match this call to a campaign. Please try again later.');
+        }
+
+        if ($sessionId !== '' && $call->shouldAdoptProviderCallId((string) $call->twilio_call_sid)) {
+            $call->update([
+                'twilio_call_sid' => $sessionId,
+                'provider_call_sid' => $sessionId,
+                'provider' => 'africastalking',
+                'status' => 'ringing',
+            ]);
+        }
+
+        if ($call->campaign_id) {
+            $campaign = $call->campaign;
+            $campaign?->loadMissing(['campaignContacts']);
+
+            if ($campaign?->ai_agent_id) {
+                // AT has no bidirectional media streaming: AI-agent calling is
+                // hidden for this provider (config/telephony.php).
+                return $this->errorXml('This call flow is not available.');
+            }
+
+            return $this->redirectXml(route(
+                $campaign?->type === 'text_to_speech' ? 'at-xml.campaign.tts' : 'at-xml.campaign.voice',
+                array_filter(['call_id' => $call->id, 'From' => $from, 'To' => $to])
+            ));
+        }
+
+        return $this->redirectXml(route('at-xml.manual.call', array_filter([
+            'call_id' => $call->id,
+            'From' => $from,
+            'To' => $to,
+        ])));
+    }
+
+    /**
+     * AT's single number-level Events URL. The same URL receives call status,
+     * recording and DTMF callbacks (the generated XML points GetDigits/Record
+     * at the per-call routes; this one catches the number-level stream).
+     */
+    public function events(Request $request): Response
+    {
+        $payload = $this->payload($request);
+        $request->merge($payload);
+
+        $call = $this->resolveCall(
+            isset($payload['call_id']) ? (string) $payload['call_id'] : null,
+            (string) ($payload['CallSid'] ?? ''),
+            $payload['From'] ?? null,
+            $payload['To'] ?? null
+        );
+
+        if ($call !== null) {
+            $request->merge(['call_id' => $call->id]);
+        }
+
+        if ($request->input('recordingUrl') !== null || $request->input('RecordingUrl') !== null) {
+            return app(CallController::class)->webhookRecording($request, $this->telephony);
+        }
+
+        $digits = $request->input('digits') ?? $request->input('Digits') ?? $request->input('dtmfDigits');
+        if ($digits !== null && $digits !== '') {
+            $request->merge(['Digits' => $digits]);
+
+            return app(CallController::class)->webhookDtmf($request, app(RecordDtmfAction::class));
+        }
+
+        return app(CallController::class)->webhookStatus(
+            $request,
+            app(UpdateCallStatusAction::class),
+            $this->telephony
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function payload(Request $request): array
+    {
+        $value = function (string ...$keys) use ($request): ?string {
+            foreach ($keys as $key) {
+                $candidate = $request->input($key);
+                if ($candidate !== null && $candidate !== '') {
+                    return (string) $candidate;
+                }
+            }
+
+            return null;
+        };
+
+        $direction = strtolower((string) ($value('Direction', 'direction') ?? ''));
+
+        return array_filter([
+            'From' => $value('From', 'callerNumber', 'CallerNumber'),
+            'To' => $value('To', 'destinationNumber', 'DestinationNumber'),
+            'Direction' => $direction !== '' ? $direction : null,
+            'CallSid' => $value('CallSid', 'sessionId', 'callSessionId', 'callSessionID'),
+            'Digits' => $value('Digits', 'digits', 'dtmfDigits'),
+            'call_id' => $value('clientRequestId'),
+        ], static fn (?string $value): bool => $value !== null && $value !== '');
+    }
+
+    private function resolveCall(?string $clientRequestId, string $sessionId, ?string $from, ?string $to): ?Call
+    {
+        if ($clientRequestId !== null && ctype_digit($clientRequestId)) {
+            $call = Call::query()->whereKey((int) $clientRequestId)->where('provider', 'africastalking')->first();
+            if ($call !== null) {
+                return $call;
+            }
+        }
+
+        if ($sessionId !== '') {
+            $call = Call::query()
+                ->where('provider', 'africastalking')
+                ->where(function ($query) use ($sessionId): void {
+                    $query->where('provider_call_sid', $sessionId)
+                        ->orWhere('twilio_call_sid', $sessionId);
+                })
+                ->first();
+            if ($call !== null) {
+                return $call;
+            }
+        }
+
+        if ($from === null || $to === null) {
+            return null;
+        }
+
+        return Call::query()
+            ->where('provider', 'africastalking')
+            ->where('direction', 'outbound')
+            ->where('status', 'initiated')
+            ->where('from_number', $from)
+            ->where('to_number', $to)
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->latest('id')
+            ->first();
+    }
+
+    private function redirectXml(string $url): Response
+    {
+        return $this->xml('<Response><Redirect>'.e($url).'</Redirect></Response>');
+    }
+
+    private function errorXml(string $message): Response
+    {
+        return $this->xml('<Response><Say>'.e($message).'</Say><Reject/></Response>');
+    }
+
+    private function xml(string $body): Response
+    {
+        return response('<?xml version="1.0" encoding="UTF-8"?>'.$body, 200, [
+            'Content-Type' => 'application/xml; charset=utf-8',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+}
