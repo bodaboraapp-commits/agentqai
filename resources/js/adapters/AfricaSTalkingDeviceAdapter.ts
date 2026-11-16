@@ -183,6 +183,16 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
         this.emit('incoming', call);
       }, false);
 
+      this.client.on('calling', () => {
+        if (this.activeCall) this.activeCall.status = 'dialing';
+        this.emit('calling');
+      }, false);
+
+      this.client.on('error', (error: any) => {
+        if (this.activeCall) this.activeCall.status = 'error';
+        this.emit('error', error);
+      }, false);
+
       this.client.on('callaccepted', () => {
         if (this.activeCall) this.activeCall.status = 'connected';
         this.emit('callaccepted');
@@ -234,14 +244,22 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       throw new Error('Africa\'s Talking client not initialised');
     }
 
-    this.client.call(to);
+    try {
+      this.client.call(to);
+    } catch (e) {
+      this.emit('error', e);
+      throw e;
+    }
 
     const call = new AfricaSTalkingCall(this.client);
     call.toNumber = to;
     call.status = 'dialing';
     this.activeCall = call;
 
-    if (params?.appCallId) call.appCallId = params.appCallId;
+    // The softphone passes the app Call id as `call_id`; keep it for
+    // disposition/call-log correlation (AT itself does not carry it).
+    const appCallId = params?.call_id ?? params?.appCallId;
+    if (appCallId) call.appCallId = appCallId;
 
     return call;
   }

@@ -36,6 +36,11 @@ class AfricaSTalkingSessionController extends Controller
         $payload = $this->payload($request);
         $request->merge($payload);
 
+        \Illuminate\Support\Facades\Log::info('AT session callback', [
+            'payload' => $request->all(),
+            'resolved' => ['from' => $payload['From'] ?? null, 'to' => $payload['To'] ?? null, 'direction' => $payload['Direction'] ?? null],
+        ]);
+
         $sessionId = (string) ($payload['CallSid'] ?? '');
         $direction = strtolower((string) ($payload['Direction'] ?? ''));
         $from = $payload['From'] ?? null;
@@ -101,6 +106,8 @@ class AfricaSTalkingSessionController extends Controller
     {
         $payload = $this->payload($request);
         $request->merge($payload);
+
+        \Illuminate\Support\Facades\Log::info('AT events callback', ['payload' => $request->all()]);
 
         $call = $this->resolveCall(
             isset($payload['call_id']) ? (string) $payload['call_id'] : null,
@@ -181,19 +188,42 @@ class AfricaSTalkingSessionController extends Controller
             }
         }
 
-        if ($from === null || $to === null) {
+        if ($to === null) {
             return null;
         }
 
-        return Call::query()
+        $query = Call::query()
             ->where('provider', 'africastalking')
             ->where('direction', 'outbound')
-            ->where('status', 'initiated')
-            ->where('from_number', $from)
+            // A retried/duplicated callback arrives after the first one already
+            // adopted the session id and moved the row to 'ringing'; both are
+            // in-flight states for a dial that has not been answered yet.
+            ->whereIn('status', ['initiated', 'ringing'])
             ->where('to_number', $to)
-            ->where('created_at', '>=', now()->subMinutes(15))
-            ->latest('id')
-            ->first();
+            ->where('created_at', '>=', now()->subMinutes(15));
+
+        // Exact two-way match first: API-placed calls, and browsers whose
+        // callback reports the AT number as callerNumber.
+        if ($from !== null) {
+            $exact = (clone $query)->where('from_number', $from)->latest('id')->first();
+            if ($exact !== null) {
+                return $exact;
+            }
+
+            // AT may report the WebRTC client identity (user_12) rather than a
+            // phone number on a browser-originated call. Map it back to the
+            // user and match the call that user's softphone just created.
+            if (preg_match('/^(?:client:)?user_(\d+)$/', $from, $matches)) {
+                $byUser = (clone $query)->where('user_id', (int) $matches[1])->latest('id')->first();
+                if ($byUser !== null) {
+                    return $byUser;
+                }
+            }
+        }
+
+        // Last resort for a manual dial: the destination plus recency is
+        // unique enough among this installation's own AT-number calls.
+        return $query->latest('id')->first();
     }
 
     private function redirectXml(string $url): Response
