@@ -32,8 +32,7 @@ return [
     */
     'providers' => [
 
-        'plivo' => [
-            // Escape hatch for local/testing use — mirrors twilio.skip_signature_validation.
+        'plivo' => [            // Escape hatch for local/testing use — mirrors twilio.skip_signature_validation.
             'skip_signature_validation' => env('PLIVO_SKIP_SIGNATURE_VALIDATION', false),
 
             'tts' => [
@@ -99,6 +98,16 @@ return [
         // for a Plivo buyer to run, not merely nothing that works yet.
         'plivo' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'webrtc_token', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats'],
         'twilio' => [],
+
+        // Africa's Talking. Its own settings live in config/africastalking.php.
+        // AT has no bidirectional media streaming, so real-time AI voice
+        // agents cannot work and every AI-calling surface is hidden. It has no
+        // geo-permission product, no carrier/BYOC/SIP-trunk API, no Twilio
+        // console and no account-migration tooling. The browser softphone
+        // (webrtc_token) and call-hold are phase 2 and hidden until wired.
+        // SMS is supported by AT and is implemented in phase 2; until then the
+        // provider is not selectable (config/africastalking.php 'enabled').
+        'africastalking' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'webrtc_token', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats'],
     ],
 
 ];

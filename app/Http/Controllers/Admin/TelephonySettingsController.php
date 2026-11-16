@@ -148,7 +148,7 @@ final class TelephonySettingsController extends Controller
             'provider' => TelephonyProvider::TWILIO->value,
             'providers' => array_map(
                 fn (TelephonyProvider $p): array => ['value' => $p->value, 'label' => $p->label()],
-                TelephonyProvider::cases(),
+                TelephonyProvider::selectable(),
             ),
             // Where the chosen provider is submitted. A prop for the same
             // reason index()'s chooseUrl is one, and the installer's

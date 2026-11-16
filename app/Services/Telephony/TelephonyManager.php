@@ -14,6 +14,10 @@ use App\Contracts\Telephony\VoiceProviderInterface;
 use App\Contracts\Telephony\WebhookNormalizerInterface;
 use App\Contracts\Telephony\WebRTCTokenProviderInterface;
 use App\Enums\TelephonyProvider;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingCallXmlGenerator;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingPendingCapabilities;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingVoiceProvider;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingWebhookNormalizer;
 use App\Services\Telephony\Plivo\PlivoAudioStreamProvider;
 use App\Services\Telephony\Plivo\PlivoCallXmlGenerator;
 use App\Services\Telephony\Plivo\PlivoPhoneNumberProvider;
@@ -86,6 +90,21 @@ final class TelephonyManager
             'audioStream' => PlivoAudioStreamProvider::class,
             'verification' => PlivoVerificationProvider::class,
             'pricing' => PlivoPricingProvider::class,
+        ],
+        // Africa's Talking — phase 1 (voice core). The remaining capabilities
+        // deliberately point at one "not implemented in phase 1" class rather
+        // than Twilio/Plivo implementations: a missing capability must fail
+        // loudly, never silently fall through to another provider's code.
+        'africastalking' => [
+            'voice' => AfricaSTalkingVoiceProvider::class,
+            'callXml' => AfricaSTalkingCallXmlGenerator::class,
+            'webhookNormalizer' => AfricaSTalkingWebhookNormalizer::class,
+            'sms' => AfricaSTalkingPendingCapabilities::class,
+            'phoneNumbers' => AfricaSTalkingPendingCapabilities::class,
+            'webrtcToken' => AfricaSTalkingPendingCapabilities::class,
+            'audioStream' => AfricaSTalkingPendingCapabilities::class,
+            'verification' => AfricaSTalkingPendingCapabilities::class,
+            'pricing' => AfricaSTalkingPendingCapabilities::class,
         ],
     ];
 

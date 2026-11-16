@@ -255,7 +255,10 @@ class InstallController extends Controller implements HasMiddleware
                     'value' => $provider->value,
                     'label' => $provider->label(),
                 ],
-                TelephonyProvider::cases(),
+                // Only providers whose integration is complete: a buyer must
+                // never be able to lock a half-finished one (Africa's Talking
+                // stays out until config('africastalking.enabled') is true).
+                TelephonyProvider::selectable(),
             ),
             'submitUrl' => route('install.telephony.lock'),
             'backUrl' => route('install.database'),
