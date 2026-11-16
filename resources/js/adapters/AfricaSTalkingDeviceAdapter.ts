@@ -15,31 +15,51 @@ import type { VoiceDeviceAdapter, VoiceCall, CallStatus } from '@/types/telephon
 
 type EventHandler = (...args: unknown[]) => void;
 
-const AT_SDK_URL = 'https://unpkg.com/africastalking-client@1.0.6/build/africastalking.js';
+// AT's browser SDK, vendored from the CDN build their README documents
+// (https://unpkg.com/africastalking-client@1.0.8/build/africastalking.js).
+// Bundling it removes the third-party CDN/CSP dependency that could silently
+// prevent the client from loading at all — in which case the browser never
+// dials and the AT dashboard shows no session.
+// @ts-expect-error - Vite asset-URL import; the SDK ships no type declarations
+import atSdkAssetUrl from '@/vendor/africastalking.js?url';
+
+const AT_SDK_CDN_FALLBACK = 'https://unpkg.com/africastalking-client@1.0.8/build/africastalking.js';
 
 /** The SDK is a UMD bundle that publishes itself as window.Africastalking. */
 let sdkPromise: Promise<any> | null = null;
+
+function injectSdk(url: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.async = true;
+    script.onload = () => {
+      console.info('[AT] SDK script loaded:', url);
+      const sdk = (window as any).Africastalking;
+      if (sdk) resolve(sdk);
+      else reject(new Error('Africa\'s Talking SDK loaded without a global'));
+    };
+    script.onerror = () => reject(new Error('Could not load the Africa\'s Talking softphone SDK from '.concat(url)));
+    document.head.appendChild(script);
+  });
+}
 
 function loadAtSdk(): Promise<any> {
   const existing = (window as any).Africastalking;
   if (existing) return Promise.resolve(existing);
   if (sdkPromise) return sdkPromise;
 
-  sdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = AT_SDK_URL;
-    script.async = true;
-    script.onload = () => {
-      const sdk = (window as any).Africastalking;
-      if (sdk) resolve(sdk);
-      else reject(new Error('Africa\'s Talking SDK loaded without a global'));
-    };
-    script.onerror = () => {
+  console.info('[AT] loading vendored SDK asset');
+  sdkPromise = injectSdk(atSdkAssetUrl)
+    .catch((firstError) => {
+      console.warn('[AT] vendored SDK failed, trying CDN fallback:', firstError);
+      return injectSdk(AT_SDK_CDN_FALLBACK);
+    })
+    .catch((error) => {
+      console.error('[AT] SDK load failed:', error);
       sdkPromise = null;
-      reject(new Error('Could not load the Africa\'s Talking softphone SDK'));
-    };
-    document.head.appendChild(script);
-  });
+      throw error;
+    });
 
   return sdkPromise;
 }
@@ -144,19 +164,24 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
   async initialize(token: string): Promise<void> {
     if (this.client) this.destroy();
 
+    console.info('[AT] initialising client', { tokenPrefix: token.slice(0, 10) });
     const AT = await loadAtSdk();
     this.client = new AT.Client(token);
     this.registered = false;
 
     await new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(
-        () => reject(new Error('Africa\'s Talking softphone did not become ready')),
+        () => {
+          console.error('[AT] client did not become ready within 20s');
+          reject(new Error('Africa\'s Talking softphone did not become ready'));
+        },
         20000,
       );
 
       const ready = () => {
         window.clearTimeout(timeout);
         this.registered = true;
+        console.info('[AT] client ready — calls can be placed');
         this.emit('registered');
         resolve();
       };
@@ -164,12 +189,14 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       this.client.on('ready', ready, false);
 
       this.client.on('offline', () => {
+        console.warn('[AT] client offline (token expired or socket lost)');
         this.registered = false;
         this.emit('tokenExpiring');
         this.emit('unregistered');
       }, false);
 
       this.client.on('closed', () => {
+        console.warn('[AT] client socket closed');
         this.registered = false;
         this.emit('unregistered');
       }, false);
@@ -189,6 +216,7 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       }, false);
 
       this.client.on('error', (error: any) => {
+        console.error('[AT] client error:', error);
         if (this.activeCall) this.activeCall.status = 'error';
         this.emit('error', error);
       }, false);
@@ -244,9 +272,13 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
       throw new Error('Africa\'s Talking client not initialised');
     }
 
+    console.info('[AT] dialling', to, { registered: this.registered });
+
     try {
       this.client.call(to);
+      console.info('[AT] call() accepted by SDK — if the AT dashboard shows no session, the SDK/client is not registered on the AT network');
     } catch (e) {
+      console.error('[AT] call() threw:', e);
       this.emit('error', e);
       throw e;
     }
