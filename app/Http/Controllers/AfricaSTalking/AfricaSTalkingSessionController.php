@@ -351,11 +351,18 @@ class AfricaSTalkingSessionController extends Controller
             'record' => $call->enable_recording ? 'record-from-answer' : null,
         ]);
 
-        return response($callXml->buildResponse([
+        $xml = $callXml->buildResponse([
             $callXml->say('Connecting your call. Please wait.', ['voice' => 'alice', 'language' => null]),
             $dial,
             $callXml->say('The person you are trying to reach is not available. Goodbye!', ['voice' => 'alice', 'language' => null]),
-        ]), 200, [
+        ]);
+
+        \Illuminate\Support\Facades\Log::info('AT client dial: returning bridge XML', [
+            'call_id' => $call->id,
+            'xml' => $xml,
+        ]);
+
+        return response($xml, 200, [
             'Content-Type' => 'application/xml; charset=utf-8',
             'Cache-Control' => 'no-store',
         ]);
