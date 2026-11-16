@@ -65,16 +65,20 @@ class AfricaSTalkingWebRTCTokenProvider implements WebRTCTokenProviderInterface
         $clientName = preg_replace('/\s+/', '_', $identity) ?: $identity;
 
         try {
+            // AT's capability-token endpoint accepts ONLY application/json
+            // (form-encoded bodies get a 415), with boolean incoming/outgoing
+            // and a numeric expire. Sending form data was why the browser
+            // softphone showed "Request failed with status code 503".
             $response = Http::withHeaders(['apiKey' => $this->apiKey, 'Accept' => 'application/json'])
                 ->timeout((int) config('africastalking.api.timeout_seconds', 20))
-                ->asForm()
+                ->asJson()
                 ->post((string) config('africastalking.api.webrtc_token_url'), [
                     'username' => $this->username,
                     'clientName' => $clientName,
                     'phoneNumber' => trim($phoneNumber),
-                    'incoming' => 'true',
-                    'outgoing' => 'true',
-                    'expire' => (string) $expiresIn,
+                    'incoming' => true,
+                    'outgoing' => true,
+                    'expire' => $expiresIn,
                 ]);
         } catch (\Throwable $e) {
             throw new RuntimeException('Could not reach Africa\'s Talking to create a softphone token: '.$e->getMessage());
