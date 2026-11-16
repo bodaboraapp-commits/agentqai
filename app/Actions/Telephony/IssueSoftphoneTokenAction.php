@@ -7,6 +7,7 @@ namespace App\Actions\Telephony;
 use App\Actions\Twilio\GenerateTwilioTokenAction;
 use App\Enums\TelephonyProvider;
 use App\Exceptions\Telephony\SoftphoneUnavailableException;
+use App\Models\PhoneNumber;
 use App\Models\TelephonyProviderConfig;
 use App\Models\TwilioGlobalConfig;
 use App\Models\User;
@@ -64,13 +65,7 @@ class IssueSoftphoneTokenAction
         return match ($this->telephony->provider()) {
             TelephonyProvider::TWILIO => $this->forTwilio($user),
             TelephonyProvider::PLIVO => $this->forPlivo($user),
-            // AT's browser client is not wired in yet and the softphone
-            // surface is hidden for it. Without this arm, switching to AT made
-            // every page that shares the softphone props throw
-            // UnhandledMatchError (500 on all Inertia pages).
-            TelephonyProvider::AFRICASTALKING => throw new SoftphoneUnavailableException(
-                'The browser softphone is not available on Africa\'s Talking. Use a campaign or the AT dashboard to place calls.'
-            ),
+            TelephonyProvider::AFRICASTALKING => $this->forAfricaSTalking($user),
         };
     }
 
@@ -83,9 +78,9 @@ class IssueSoftphoneTokenAction
         return match ($this->telephony->provider()) {
             TelephonyProvider::TWILIO => TwilioGlobalConfig::active() !== null,
             TelephonyProvider::PLIVO => $this->plivoCredentials() !== null,
-            // No softphone path exists for AT yet; false hides the widget
-            // instead of throwing on every page.
-            TelephonyProvider::AFRICASTALKING => false,
+            // AT needs a verified username/API key; the number is checked when
+            // a token is actually requested (it is per-user, this is not).
+            TelephonyProvider::AFRICASTALKING => $this->africaSTalkingCredentials() !== null,
         };
     }
 
@@ -155,6 +150,73 @@ class IssueSoftphoneTokenAction
             'provider' => TelephonyProvider::PLIVO->value,
             'expires_in' => $issued['expires_in'],
         ];
+    }
+
+    /**
+     * AT's browser client registers with a capability token minted for one
+     * clientName and one AT number. The number must be assigned to this user —
+     * the same rows the dialer lists — and the API key never leaves the server.
+     */
+    private function forAfricaSTalking(User $user): array
+    {
+        $credentials = $this->africaSTalkingCredentials();
+
+        if ($credentials === null) {
+            throw new SoftphoneUnavailableException('Africa\'s Talking is not configured for the softphone. Ask an administrator to verify its credentials.');
+        }
+
+        $number = PhoneNumber::query()
+            ->where('user_id', $user->id)
+            ->where('provider', TelephonyProvider::AFRICASTALKING->value)
+            ->where('status', 'assigned')
+            ->orderByDesc('assigned_at')
+            ->first();
+
+        if ($number === null) {
+            throw new SoftphoneUnavailableException('No Africa\'s Talking number is assigned to you yet. Ask an administrator to assign one.');
+        }
+
+        try {
+            $issued = $this->telephony->webrtcToken()
+                ->initialize($credentials)
+                ->generateToken(self::identity($user), [
+                    'phone_number' => $number->number,
+                    'expires_in' => self::TOKEN_TTL_SECONDS,
+                ]);
+        } catch (Throwable $e) {
+            Log::error('Softphone: failed to issue an Africa\'s Talking token', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new SoftphoneUnavailableException('The softphone could not be set up with Africa\'s Talking. Please try again, or contact your administrator.');
+        }
+
+        return [
+            'token' => $issued['token'],
+            'identity' => $issued['identity'],
+            'provider' => TelephonyProvider::AFRICASTALKING->value,
+            'expires_in' => $issued['expires_in'],
+            'phone_number' => $number->number,
+        ];
+    }
+
+    /**
+     * This installation's one Africa's Talking account, read-only.
+     *
+     * @return array{username: string, api_key: string}|null
+     */
+    private function africaSTalkingCredentials(): ?array
+    {
+        $config = TelephonyProviderConfig::where('name', TelephonyProvider::AFRICASTALKING->value)->first();
+        $username = $config?->credential('username');
+        $apiKey = $config?->credential('api_key');
+
+        if (! $username || ! $apiKey) {
+            return null;
+        }
+
+        return ['username' => $username, 'api_key' => $apiKey];
     }
 
     /**

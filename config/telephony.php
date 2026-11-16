@@ -108,7 +108,7 @@ return [
         // Numbers are provisioned in the AT dashboard (KYC) and registered with
         // `php artisan telephony:africastalking --number=…`, so the Twilio/Plivo
         // number-search console is hidden rather than broken.
-        'africastalking' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'webrtc_token', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats', 'phone_numbers'],
+        'africastalking' => ['byoc', 'sip_trunk', 'account_migration', 'geo_permissions', 'twilio_console_commands', 'call_hold', 'ai_agent_outbound_call', 'ai_agent_number_webhooks', 'answered_stats', 'phone_numbers'],
     ],
 
 ];

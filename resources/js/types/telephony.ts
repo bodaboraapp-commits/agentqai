@@ -15,7 +15,7 @@
 
 // ─── Provider Identity ───────────────────────────
 
-export type TelephonyProviderName = 'twilio' | 'plivo';
+export type TelephonyProviderName = 'twilio' | 'plivo' | 'africastalking';
 
 /**
  * The `telephony` prop every authenticated Inertia page carries, shared

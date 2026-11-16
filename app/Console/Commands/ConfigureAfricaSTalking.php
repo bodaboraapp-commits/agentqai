@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\PhoneNumber;
 use App\Models\TelephonyProviderConfig;
+use App\Models\User;
 use App\Services\Telephony\AfricaSTalking\AfricaSTalkingVoiceProvider;
 use Illuminate\Console\Command;
 
@@ -22,7 +23,8 @@ class ConfigureAfricaSTalking extends Command
     protected $signature = 'telephony:africastalking
         {--username= : Africa\'s Talking app username}
         {--api-key= : Africa\'s Talking API key (prompted securely when omitted)}
-        {--number= : Voice number in E.164 to register for this installation}';
+        {--number= : Voice number in E.164 to register for this installation}
+        {--assign-user= : User id or email to assign the number to (status assigned, so it lists in their softphone)}';
 
     protected $description = 'Configure and verify Africa\'s Talking, optionally register a voice number, and print the AT callback URLs';
 
@@ -80,6 +82,29 @@ class ConfigureAfricaSTalking extends Command
             );
 
             $this->info('Registered voice number: '.$digits);
+
+            // Assign to a user so it appears in their softphone dialer and can
+            // be used to mint a WebRTC capability token for that number.
+            $assignTo = trim((string) ($this->option('assign-user') ?? ''));
+            if ($assignTo !== '') {
+                $target = User::query()
+                    ->where('id', $assignTo)
+                    ->orWhere('email', $assignTo)
+                    ->first();
+
+                if ($target === null) {
+                    $this->warn("User [{$assignTo}] was not found; the number stays unassigned.");
+                } else {
+                    PhoneNumber::query()->where('number', $digits)->update([
+                        'user_id' => $target->id,
+                        'status' => 'assigned',
+                        'assigned_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $this->info("Assigned {$digits} to {$target->email} — it now appears in their softphone.");
+                }
+            }
         }
 
         $this->newLine();

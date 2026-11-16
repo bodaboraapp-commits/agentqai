@@ -5,6 +5,7 @@
 import type { TelephonyProviderName, VoiceDeviceAdapter } from '@/types/telephony';
 import { TwilioDeviceAdapter } from './TwilioDeviceAdapter';
 import { PlivoDeviceAdapter } from './PlivoDeviceAdapter';
+import { AfricaSTalkingDeviceAdapter } from './AfricaSTalkingDeviceAdapter';
 
 /**
  * Create a VoiceDeviceAdapter for the specified provider.
@@ -15,6 +16,8 @@ export function createAdapter(provider: TelephonyProviderName): VoiceDeviceAdapt
       return new TwilioDeviceAdapter();
     case 'plivo':
       return new PlivoDeviceAdapter();
+    case 'africastalking':
+      return new AfricaSTalkingDeviceAdapter();
     default:
       throw new Error(`Unknown telephony provider: ${provider}`);
   }
@@ -22,3 +25,4 @@ export function createAdapter(provider: TelephonyProviderName): VoiceDeviceAdapt
 
 export { TwilioDeviceAdapter } from './TwilioDeviceAdapter';
 export { PlivoDeviceAdapter } from './PlivoDeviceAdapter';
+export { AfricaSTalkingDeviceAdapter } from './AfricaSTalkingDeviceAdapter';

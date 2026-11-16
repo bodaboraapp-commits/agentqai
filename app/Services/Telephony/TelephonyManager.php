@@ -18,6 +18,7 @@ use App\Services\Telephony\AfricaSTalking\AfricaSTalkingCallXmlGenerator;
 use App\Services\Telephony\AfricaSTalking\AfricaSTalkingPendingCapabilities;
 use App\Services\Telephony\AfricaSTalking\AfricaSTalkingVoiceProvider;
 use App\Services\Telephony\AfricaSTalking\AfricaSTalkingWebhookNormalizer;
+use App\Services\Telephony\AfricaSTalking\AfricaSTalkingWebRTCTokenProvider;
 use App\Services\Telephony\Plivo\PlivoAudioStreamProvider;
 use App\Services\Telephony\Plivo\PlivoCallXmlGenerator;
 use App\Services\Telephony\Plivo\PlivoPhoneNumberProvider;
@@ -101,7 +102,7 @@ final class TelephonyManager
             'webhookNormalizer' => AfricaSTalkingWebhookNormalizer::class,
             'sms' => AfricaSTalkingPendingCapabilities::class,
             'phoneNumbers' => AfricaSTalkingPendingCapabilities::class,
-            'webrtcToken' => AfricaSTalkingPendingCapabilities::class,
+            'webrtcToken' => AfricaSTalkingWebRTCTokenProvider::class,
             'audioStream' => AfricaSTalkingPendingCapabilities::class,
             'verification' => AfricaSTalkingPendingCapabilities::class,
             'pricing' => AfricaSTalkingPendingCapabilities::class,
