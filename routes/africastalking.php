@@ -31,6 +31,58 @@ Route::middleware('auth')
     ->post('/api/africastalking/call-completed', [SoftphoneCallStatusController::class, 'completed'])
     ->name('africastalking.call-completed');
 
+// Admin deploy check: proves which code the PHP process is actually running
+// (git ref + file mtimes + presence of recent methods), because stale OPcache
+// on shared hosting can keep executing old classes after `git pull`.
+Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
+    $head = null;
+    foreach (['.git/refs/heads/main', '.git/HEAD'] as $ref) {
+        $path = base_path($ref);
+        if (is_file($path)) {
+            $head = trim((string) file_get_contents($path));
+            if (str_starts_with($head, 'ref: ')) {
+                $resolved = base_path(substr($head, 5));
+                $head = is_file($resolved) ? trim((string) file_get_contents($resolved)) : $head;
+            }
+            break;
+        }
+    }
+
+    $files = [
+        'session_controller' => app_path('Http/Controllers/AfricaSTalking/AfricaSTalkingSessionController.php'),
+        'voice_provider' => app_path('Services/Telephony/AfricaSTalking/AfricaSTalkingVoiceProvider.php'),
+        'call_xml_generator' => app_path('Services/Telephony/AfricaSTalking/AfricaSTalkingCallXmlGenerator.php'),
+        'config' => config_path('africastalking.php'),
+    ];
+
+    $mtimes = [];
+    foreach ($files as $key => $path) {
+        $mtimes[$key] = is_file($path) ? date('c', filemtime($path)) : 'missing';
+    }
+
+    return response()->json([
+        'git_head' => $head,
+        'file_mtimes' => $mtimes,
+        'has_voice_sanitizer' => method_exists(
+            \App\Services\Telephony\AfricaSTalking\AfricaSTalkingCallXmlGenerator::class,
+            'isAfricaSTalkingVoice'
+        ),
+        'has_terminal_session_handler' => method_exists(
+            \App\Http\Controllers\AfricaSTalking\AfricaSTalkingSessionController::class,
+            'applyTerminalSessionState'
+        ),
+        'voice_api_url' => config('africastalking.api.voice_base_url'),
+        'voice_call_path' => config('africastalking.api.voice_call_path'),
+        'opcache' => function_exists('opcache_get_status') ? [
+            'enabled' => (bool) (opcache_get_status(false)['opcache_enabled'] ?? false),
+            'validate_timestamps' => (bool) ini_get('opcache.validate_timestamps'),
+            'revalidate_freq' => ini_get('opcache.revalidate_freq'),
+        ] : ['enabled' => false],
+        'server_time' => now()->toDateTimeString(),
+    ]);
+})->name('africastalking.deploy-check');
+
+
 Route::prefix('at-xml')->name('at-xml.')->middleware(['throttle:120,1'])->group(function (): void {
     // The single URL an AT number's "Callback" setting must point at.
     Route::match(['get', 'post'], '/session', [AfricaSTalkingSessionController::class, 'session'])
