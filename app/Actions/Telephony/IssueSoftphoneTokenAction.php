@@ -64,6 +64,13 @@ class IssueSoftphoneTokenAction
         return match ($this->telephony->provider()) {
             TelephonyProvider::TWILIO => $this->forTwilio($user),
             TelephonyProvider::PLIVO => $this->forPlivo($user),
+            // AT's browser client is not wired in yet and the softphone
+            // surface is hidden for it. Without this arm, switching to AT made
+            // every page that shares the softphone props throw
+            // UnhandledMatchError (500 on all Inertia pages).
+            TelephonyProvider::AFRICASTALKING => throw new SoftphoneUnavailableException(
+                'The browser softphone is not available on Africa\'s Talking. Use a campaign or the AT dashboard to place calls.'
+            ),
         };
     }
 
@@ -76,6 +83,9 @@ class IssueSoftphoneTokenAction
         return match ($this->telephony->provider()) {
             TelephonyProvider::TWILIO => TwilioGlobalConfig::active() !== null,
             TelephonyProvider::PLIVO => $this->plivoCredentials() !== null,
+            // No softphone path exists for AT yet; false hides the widget
+            // instead of throwing on every page.
+            TelephonyProvider::AFRICASTALKING => false,
         };
     }
 
