@@ -694,6 +694,37 @@ class TwimlController extends Controller
             $dialOptions['sip_uri'] = $this->plivoEndpoints->storedFor($targetUser)['sip_uri'] ?? null;
         }
 
+        // ── Africa's Talking inbound strategy ─────────────────────────────
+        // AT Voice XML cannot dial a browser WebRTC client name (AT answers the
+        // bridge with a 0-second "Aborted"); the only documented softphone
+        // target is an AT SIP phone. Two supported strategies:
+        //   client  — try the WebRTC client name (prefix configurable:
+        //             "" / "client:" / "AgentQ_AI." as shown in AT's own logs)
+        //   forward — dial a real E.164 number (AT-documented, guaranteed ring)
+        if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
+            $forwardTo = trim((string) config('africastalking.voice.inbound.forward_to'));
+            $mode = (string) config('africastalking.voice.inbound.mode', 'client');
+
+            Log::info('Inbound AT call strategy', [
+                'call_id' => $call->id,
+                'mode' => $mode,
+                'forward_to' => $forwardTo !== '' ? $forwardTo : null,
+                'client_identity' => $clientIdentity,
+                'client_dial_target' => (string) config('africastalking.voice.webrtc_client_prefix', '').$clientIdentity,
+            ]);
+
+            if ($forwardTo !== '' && in_array($mode, ['forward', 'auto'], true)) {
+                return $this->respondWithXml($callXml->buildResponse([
+                    $callXml->say('Connecting your call. Please wait.', ['language' => null]),
+                    $callXml->dial($forwardTo, [
+                        'callerId' => $call->to_number,
+                        'timeout' => 30,
+                    ]),
+                    $callXml->say('The person you are trying to reach is not available. Goodbye!', ['language' => null]),
+                ]));
+            }
+        }
+
         try {
             $dialXml = $callXml->dialClient($clientIdentity, $dialOptions);
         } catch (InvalidArgumentException $e) {

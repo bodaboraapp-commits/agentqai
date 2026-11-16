@@ -72,9 +72,31 @@ return [
         // AT's <Dial phoneNumbers="…"> is used for both PSTN numbers and this
         // installation's registered browser clients. AT does not document a
         // client-dial form, so the prefix is configurable to validate it live:
-        //   ''         → "user_12"
-        //   'client:'  → "client:user_12"
+        //   ''               → "user_12"
+        //   'client:'        → "client:user_12"
+        //   'AgentQ_AI.'     → "AgentQ_AI.user_12"  (AT's own identity format)
         'webrtc_client_prefix' => env('AFRICASTALKING_CLIENT_PREFIX', ''),
+
+        /*
+        |----------------------------------------------------------------------
+        | Inbound policy
+        |----------------------------------------------------------------------
+        |
+        | AT Voice XML cannot ring a browser WebRTC client by name (AT answers
+        | the bridge with a 0-second "Aborted"); the documented softphone target
+        | is an AT SIP phone. Two strategies:
+        |
+        |   client  — try the WebRTC client identity with CLIENT_PREFIX above.
+        |             Experimental; ring the browser if AT accepts the form.
+        |   forward — dial AFRICASTALKING_INBOUND_FORWARD (a real E.164 number,
+        |             e.g. your mobile). AT-documented and always rings.
+        |   auto    — forward when a forward number is set, otherwise client.
+        |
+        */
+        'inbound' => [
+            'mode' => env('AFRICASTALKING_INBOUND_MODE', 'client'),
+            'forward_to' => env('AFRICASTALKING_INBOUND_FORWARD'),
+        ],
 
         // AT <Say> voice + <GetDigits> defaults. Empty means "let AT use its
         // own default voice" — Twilio/Polly voice names must never be sent to
