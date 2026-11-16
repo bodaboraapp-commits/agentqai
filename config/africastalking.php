@@ -37,6 +37,13 @@ return [
         'version_segment' => 'version1',
         'timeout_seconds' => (int) env('AFRICASTALKING_TIMEOUT', 20),
 
+        // Voice API is a separate host from the user/SMS API: POST /call on
+        // voice.africastalking.com (voice.sandbox.… in sandbox). The old
+        // api…/version1/voice/call path returns nginx 404.
+        'voice_base_url' => env('AFRICASTALKING_VOICE_API_URL', 'https://voice.africastalking.com'),
+        'voice_sandbox_base_url' => env('AFRICASTALKING_VOICE_SANDBOX_API_URL', 'https://voice.sandbox.africastalking.com'),
+        'voice_call_path' => '/call',
+
         // WebRTC capability-token service (browser softphone, phase 2).
         'webrtc_token_url' => env('AFRICASTALKING_WEBRTC_TOKEN_URL', 'https://webrtc.africastalking.com/capability-token/request'),
     ],

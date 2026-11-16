@@ -47,6 +47,21 @@ class AfricaSTalkingVoiceProvider implements VoiceProviderInterface
         return rtrim((string) $host, '/').'/'.config('africastalking.api.version_segment', 'version1');
     }
 
+    /**
+     * AT's Voice API is a separate host from the user/SMS API: the outbound
+     * call endpoint is POST https://voice.africastalking.com/call. The old
+     * api…/version1/voice/call path answers nginx 404, so every campaign call
+     * placed through the provider failed before AT ever saw it.
+     */
+    private function voiceEndpoint(): string
+    {
+        $host = $this->username === 'sandbox'
+            ? config('africastalking.api.voice_sandbox_base_url')
+            : config('africastalking.api.voice_base_url');
+
+        return rtrim((string) $host, '/').config('africastalking.api.voice_call_path', '/call');
+    }
+
     private function assertConfigured(): void
     {
         if ($this->username === null || $this->username === '' || $this->apiKey === null || $this->apiKey === '') {
@@ -84,7 +99,7 @@ class AfricaSTalkingVoiceProvider implements VoiceProviderInterface
             $response = Http::withHeaders(['apiKey' => $this->apiKey, 'Accept' => 'application/json'])
                 ->timeout((int) config('africastalking.api.timeout_seconds', 20))
                 ->asForm()
-                ->post($this->baseUrl().'/voice/call', $payload);
+                ->post($this->voiceEndpoint(), $payload);
 
             if (! $response->successful()) {
                 $message = $this->errorMessage($response->json(), $response->body());
