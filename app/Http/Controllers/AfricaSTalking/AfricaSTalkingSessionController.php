@@ -72,11 +72,12 @@ class AfricaSTalkingSessionController extends Controller
                     ]);
                 }
 
-                return $this->redirectXml(route('at-xml.manual.call', array_filter([
-                    'call_id' => $call->id,
-                    'From' => $from,
-                    'To' => $call->to_number,
-                ])));
+                // Answer the session callback directly with the bridge XML.
+                // AT may not preserve the call id across a <Redirect> hop, and
+                // a redirect the provider does not follow leaves the call with
+                // no instructions — AT then terminates it (hangup 200 "Session
+                // Terminated") and the destination never rings.
+                return $this->manualDialXml($call);
             }
         }
 
@@ -276,6 +277,37 @@ class AfricaSTalkingSessionController extends Controller
         // Last resort for a manual dial: the destination plus recency is
         // unique enough among this installation's own AT-number calls.
         return $query->latest('id')->first();
+    }
+
+    /**
+     * The AT XML that bridges a browser-originated call to the destination on
+     * the pending Call row: <Dial phoneNumbers="destination" callerId="AT number">.
+     * This is the AT equivalent of Twilio's manual-call answer document.
+     */
+    private function manualDialXml(Call $call): Response
+    {
+        \Illuminate\Support\Facades\Log::info('AT client dial: bridging browser to destination', [
+            'call_id' => $call->id,
+            'destination' => $call->to_number,
+            'caller_id' => $call->from_number,
+        ]);
+
+        $callXml = app(\App\Services\Telephony\TelephonyManager::class)->callXml();
+
+        $dial = $callXml->dial((string) $call->to_number, [
+            'callerId' => $call->from_number,
+            'timeout' => 30,
+            'record' => $call->enable_recording ? 'record-from-answer' : null,
+        ]);
+
+        return response($callXml->buildResponse([
+            $callXml->say('Connecting your call. Please wait.', ['voice' => 'alice', 'language' => null]),
+            $dial,
+            $callXml->say('The person you are trying to reach is not available. Goodbye!', ['voice' => 'alice', 'language' => null]),
+        ]), 200, [
+            'Content-Type' => 'application/xml; charset=utf-8',
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     private function redirectXml(string $url): Response
