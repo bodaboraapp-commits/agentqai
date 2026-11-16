@@ -331,16 +331,22 @@ class AfricaSTalkingSessionController extends Controller
      */
     private function manualDialXml(Call $call): Response
     {
+        // The AT <Dial callerId> must be an AT number. The dialer can now have
+        // a non-AT caller-ID selected (e.g. a Twilio number from the inventory)
+        // after the number-list changes; sending that to AT aborts the bridge.
+        $callerId = $this->atCallerId($call);
+
         \Illuminate\Support\Facades\Log::info('AT client dial: bridging browser to destination', [
             'call_id' => $call->id,
             'destination' => $call->to_number,
-            'caller_id' => $call->from_number,
+            'call_from_number' => $call->from_number,
+            'caller_id_used' => $callerId,
         ]);
 
         $callXml = app(\App\Services\Telephony\TelephonyManager::class)->callXml();
 
         $dial = $callXml->dial((string) $call->to_number, [
-            'callerId' => $call->from_number,
+            'callerId' => $callerId,
             'timeout' => 30,
             'record' => $call->enable_recording ? 'record-from-answer' : null,
         ]);
@@ -353,6 +359,48 @@ class AfricaSTalkingSessionController extends Controller
             'Content-Type' => 'application/xml; charset=utf-8',
             'Cache-Control' => 'no-store',
         ]);
+    }
+
+    /**
+     * A caller ID AT will accept. Prefer the call's own from-number when it is
+     * a registered AT number; otherwise fall back to this installation's AT
+     * number. Calling with a foreign (e.g. Twilio) caller ID makes AT reject
+     * the Dial and the call drops.
+     */
+    private function atCallerId(Call $call): string
+    {
+        $from = (string) ($call->from_number ?? '');
+
+        $isAtNumber = $from !== '' && \App\Models\PhoneNumber::query()
+            ->where('number', $from)
+            ->where('provider', 'africastalking')
+            ->exists();
+
+        if ($isAtNumber) {
+            return $from;
+        }
+
+        $atNumber = \App\Models\PhoneNumber::query()
+            ->where('provider', 'africastalking')
+            ->where('status', 'assigned')
+            ->orderByDesc('id')
+            ->value('number')
+            ?? \App\Models\PhoneNumber::query()
+                ->where('provider', 'africastalking')
+                ->value('number')
+            ?? (string) config('africastalking.voice.default_number');
+
+        if ($atNumber !== '') {
+            \Illuminate\Support\Facades\Log::warning('AT client dial: substituted a valid AT caller ID', [
+                'call_id' => $call->id,
+                'requested' => $from,
+                'used' => $atNumber,
+            ]);
+
+            return (string) $atNumber;
+        }
+
+        return $from;
     }
 
     private function redirectXml(string $url): Response
