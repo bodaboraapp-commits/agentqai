@@ -694,32 +694,6 @@ class TwimlController extends Controller
             $dialOptions['sip_uri'] = $this->plivoEndpoints->storedFor($targetUser)['sip_uri'] ?? null;
         }
 
-        // Africa's Talking XML has no browser-client dial: its <Dial> targets
-        // phone numbers. Ringing this installation's browser softphone from an
-        // inbound call therefore cannot be expressed for AT, and the uncaught
-        // LogicException here surfaced as HTTP 500 — which is why AT aborted
-        // every inbound call after ~1 second ("Aborted" in the AT sessions
-        // log). End the call politely for the caller instead and record why.
-        if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
-            Log::warning('Inbound call: Africa\'s Talking cannot dial a browser client', [
-                'call_id' => $call->id,
-                'from' => $fromNumber,
-                'to' => $toNumber,
-            ]);
-
-            if ($call->status === 'ringing') {
-                $call->update([
-                    'status' => 'failed',
-                    'error_message' => 'Inbound browser ringing is not supported on Africa\'s Talking.',
-                ]);
-            }
-
-            return $this->respondWithXml($callXml->buildResponse([
-                $callXml->say('The person you are calling is not available right now. Please try again later.'),
-                $callXml->hangup(),
-            ]));
-        }
-
         try {
             $dialXml = $callXml->dialClient($clientIdentity, $dialOptions);
         } catch (InvalidArgumentException $e) {

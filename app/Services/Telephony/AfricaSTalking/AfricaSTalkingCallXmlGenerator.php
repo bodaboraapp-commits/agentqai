@@ -190,9 +190,27 @@ class AfricaSTalkingCallXmlGenerator implements CallXmlInterface
 
     public function dialClient(string $clientIdentity, array $options = []): string
     {
-        // AT's Dial calls phone numbers; browser clients use AT's own
-        // WebRTC Client SDK (phase 2), not an XML element.
-        throw new LogicException('Africa\'s Talking does not support dialling a browser client from call XML.');
+        // AT has no separate client-dial element in its documented XML, but
+        // WebRTC clients register under a client name (our token identity,
+        // e.g. user_12) and AT routes <Dial phoneNumbers="…"> to registered
+        // endpoints for the number. The prefix is configurable so the exact
+        // form can be adjusted without a code deploy while validating:
+        //   AFRICASTALKING_CLIENT_PREFIX=''          → "user_12"
+        //   AFRICASTALKING_CLIENT_PREFIX='client:'   → "client:user_12"
+        $target = (string) config('africastalking.voice.webrtc_client_prefix', '').$clientIdentity;
+
+        return $this->document(function (DOMDocument $dom, DOMElement $response) use ($target, $options): void {
+            if (! empty($options['message'])) {
+                $this->append($dom, $response, 'Say', (string) $options['message']);
+            }
+
+            $this->append($dom, $response, 'Dial', null, [
+                'phoneNumbers' => $target,
+                'callerId' => $options['callerId'] ?? null,
+                'record' => $this->dialRecord($options['record'] ?? null),
+                'maxDuration' => $options['timeout'] ?? null,
+            ]);
+        });
     }
 
     public function conference(string $roomName, array $options = []): string

@@ -69,6 +69,13 @@ return [
         // when a call row has no explicit from-number.
         'default_number' => env('AFRICASTALKING_VOICE_NUMBER'),
 
+        // AT's <Dial phoneNumbers="…"> is used for both PSTN numbers and this
+        // installation's registered browser clients. AT does not document a
+        // client-dial form, so the prefix is configurable to validate it live:
+        //   ''         → "user_12"
+        //   'client:'  → "client:user_12"
+        'webrtc_client_prefix' => env('AFRICASTALKING_CLIENT_PREFIX', ''),
+
         // AT <Say> voice + <GetDigits> defaults.
         'tts' => [
             'default_voice' => env('AFRICASTALKING_TTS_VOICE', 'en-US-Standard-A'),
