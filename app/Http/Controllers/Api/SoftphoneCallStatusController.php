@@ -63,6 +63,15 @@ class SoftphoneCallStatusController extends Controller
                 : null,
         ])->save();
 
+        \Illuminate\Support\Facades\Log::info('Softphone completion report applied', [
+            'call_id' => $call->id,
+            'user_id' => $call->user_id,
+            'status' => $status,
+            'duration_seconds' => $call->duration_seconds,
+            'hangup_code' => $validated['hangup_code'] ?? null,
+            'hangup_reason' => $reason,
+        ]);
+
         return response()->json([
             'success' => true,
             'call' => ['id' => $call->id, 'status' => $call->status, 'duration' => $call->duration_seconds],

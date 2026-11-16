@@ -274,8 +274,13 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
             duration_seconds: durationSeconds,
             hangup_reason: typeof cause?.reason === 'string' ? cause.reason : undefined,
             hangup_code: cause?.code != null ? String(cause.code) : undefined,
-          }).catch(() => {
-            // Call logging must never break the softphone UI.
+          }).catch((error: any) => {
+            // Call logging must never break the softphone UI, but a silent
+            // failure here turns into "calls not logged" with no clue.
+            console.warn(
+              '[AT] call-completed report failed:',
+              error?.response?.status ?? error?.message ?? error,
+            );
           });
         }
 

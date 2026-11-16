@@ -81,7 +81,50 @@ class AfricaSTalkingSessionController extends Controller
             }
         }
 
+        // AT can also report a browser-originated call with a plain phone
+        // number as the caller instead of the client identity. If a manual
+        // outbound call was just created from this AT number, this callback is
+        // that dial — bridge it rather than treating it as a fresh inbound call
+        // (the inbound handler would try to ring the browser and AT would abort
+        // the call, which is what "drops again" looks like).
+        if ($to !== null) {
+            $pending = Call::query()
+                ->where('provider', 'africastalking')
+                ->where('direction', 'outbound')
+                ->whereIn('status', ['initiated', 'ringing'])
+                ->where('from_number', $to)
+                ->where('created_at', '>=', now()->subMinutes(3))
+                ->latest('id')
+                ->first();
+
+            if ($pending !== null) {
+                \Illuminate\Support\Facades\Log::info('AT session: matched a pending outbound dial', [
+                    'call_id' => $pending->id,
+                    'direction' => $direction,
+                    'from' => $from,
+                    'to' => $to,
+                ]);
+
+                if ($sessionId !== '' && $pending->shouldAdoptProviderCallId((string) $pending->twilio_call_sid)) {
+                    $pending->update([
+                        'twilio_call_sid' => $sessionId,
+                        'provider_call_sid' => $sessionId,
+                        'provider' => 'africastalking',
+                        'status' => 'ringing',
+                    ]);
+                }
+
+                return $this->manualDialXml($pending);
+            }
+        }
+
         if ($direction === 'inbound') {
+            \Illuminate\Support\Facades\Log::info('AT session: treating as inbound', [
+                'from' => $from,
+                'to' => $to,
+                'direction' => $direction,
+            ]);
+
             // Answer the AT session callback DIRECTLY with the shared inbound
             // policy's XML. The Twilio/Plivo path redirects to /inbound-call;
             // AT does not reliably follow a <Redirect> on the call session and
