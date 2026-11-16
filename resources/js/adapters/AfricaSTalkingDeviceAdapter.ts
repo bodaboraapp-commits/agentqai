@@ -159,6 +159,63 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
   private callStartedAt: number | null = null;
   private listeners: Map<string, Set<EventHandler>> = new Map();
 
+  /**
+   * Media diagnostics for "answers then drops after ~5s with no audio":
+   * proves whether the browser can capture a mic at all (a blocked mic makes
+   * AT's bridge tear the call down) and logs the permission/device state.
+   */
+  private async logAudioCapabilities(): Promise<void> {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        console.warn('[AT] audio: getUserMedia unavailable in this browser/context');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const tracks = stream.getAudioTracks();
+      console.info(
+        '[AT] audio: microphone OK',
+        tracks.map((track) => ({
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          state: track.readyState,
+          settings: track.getSettings?.() ?? null,
+        })),
+      );
+      tracks.forEach((track) => track.stop());
+    } catch (error: any) {
+      console.warn('[AT] audio: microphone NOT available — call audio will fail:', error?.name, error?.message);
+    }
+  }
+
+  /**
+   * After AT reports the call accepted (PSTN leg answered), check the SDK's
+   * remote audio element. Browsers can leave it paused/muted, which is
+   * indistinguishable from "no voice" to the user.
+   */
+  private async logRemoteAudioState(): Promise<void> {
+    const audio = document.querySelector<HTMLAudioElement>('audio#remote-stream-audio, audio');
+    if (!audio) {
+      console.warn('[AT] audio: no remote <audio> element found after callaccepted');
+      return;
+    }
+
+    try {
+      if (audio.paused) await audio.play();
+    } catch (error: any) {
+      console.warn('[AT] audio: remote element could not play:', error?.name, error?.message);
+    }
+
+    console.info('[AT] audio: remote element', {
+      paused: audio.paused,
+      muted: audio.muted,
+      volume: audio.volume,
+      readyState: audio.readyState,
+      srcObject: Boolean(audio.srcObject),
+    });
+  }
+
   isRegistered(): boolean {
     return this.registered;
   }
@@ -193,6 +250,7 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
         this.registered = true;
         console.info('[AT] client ready — calls can be placed');
         this.emit('registered');
+        void this.logAudioCapabilities();
         resolve();
       };
 
@@ -247,6 +305,7 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
         console.info('[AT] callaccepted');
         if (this.activeCall) this.activeCall.status = 'connected';
         this.emit('callaccepted');
+        void this.logRemoteAudioState();
       }, false);
 
       this.client.on('hangup', (cause: any) => {

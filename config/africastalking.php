@@ -46,6 +46,24 @@ return [
 
         // WebRTC capability-token service (browser softphone, phase 2).
         'webrtc_token_url' => env('AFRICASTALKING_WEBRTC_TOKEN_URL', 'https://webrtc.africastalking.com/capability-token/request'),
+
+        /*
+        |----------------------------------------------------------------------
+        | Browser-dial bridge shape
+        |----------------------------------------------------------------------
+        |
+        | The <Dial> we return for a browser-originated call is the main lever
+        | for "rings, answers, no audio, AT drops after ~5s". Switchable per
+        | environment to isolate without a deploy:
+        |
+        |   full       — callerId + maxDuration=30 + record (current default)
+        |   minimal    — callerId only (AT defaults decide timeouts/recording)
+        |   documented — callerId + sequential + record (AT's own softphone
+        |                sample: <Dial sequential="true" record="true" …>)
+        |
+        */
+        'bridge_dial_mode' => env('AFRICASTALKING_BRIDGE_DIAL_MODE', 'full'),
+        'bridge_ringback_tone' => env('AFRICASTALKING_BRIDGE_RINGBACK_TONE'),
     ],
 
     /*

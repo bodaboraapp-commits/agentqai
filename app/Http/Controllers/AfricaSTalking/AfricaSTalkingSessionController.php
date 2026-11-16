@@ -412,11 +412,34 @@ class AfricaSTalkingSessionController extends Controller
 
         $callXml = app(\App\Services\Telephony\TelephonyManager::class)->callXml();
 
-        $dial = $callXml->dial((string) $call->to_number, [
-            'callerId' => $callerId,
-            'timeout' => 30,
-            'record' => $call->enable_recording ? 'record-from-answer' : null,
+        // "Rings, answers, no audio, AT drops after ~5s" is a bridge/media
+        // symptom, so the Dial shape is switchable while we isolate it:
+        // full (current) / minimal (let AT defaults decide) / documented
+        // (AT's own softphone sample uses sequential + record).
+        $mode = (string) config('africastalking.voice.bridge_dial_mode', 'full');
+
+        $dialOptions = ['callerId' => $callerId];
+
+        if ($mode === 'documented') {
+            $dialOptions['sequential'] = true;
+            $dialOptions['record'] = (bool) $call->enable_recording;
+        } elseif ($mode !== 'minimal') {
+            $dialOptions['timeout'] = 30;
+            $dialOptions['record'] = $call->enable_recording ? 'record-from-answer' : null;
+        }
+
+        $ringbackTone = config('africastalking.voice.bridge_ringback_tone');
+        if (is_string($ringbackTone) && $ringbackTone !== '') {
+            $dialOptions['ringbackTone'] = $ringbackTone;
+        }
+
+        \Illuminate\Support\Facades\Log::info('AT client dial: dial options', [
+            'call_id' => $call->id,
+            'bridge_dial_mode' => $mode,
+            'options' => $dialOptions,
         ]);
+
+        $dial = $callXml->dial((string) $call->to_number, $dialOptions);
 
         $xml = $callXml->buildResponse([
             $callXml->say('Connecting your call. Please wait.', ['voice' => 'alice', 'language' => null]),
