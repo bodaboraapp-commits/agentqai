@@ -425,12 +425,29 @@ class ContactController extends Controller
             $this->authorize('create', Contact::class);
 
             $request->validate([
-                'file' => 'required|file|mimes:csv,txt|max:51200', // 50MB
+                'file' => 'required|file|mimes:csv,txt,xlsx|max:51200', // 50MB
             ]);
 
             Log::info('Validation passed');
 
             $file = $request->file('file');
+
+            // Excel (.xlsx) is read without a spreadsheet package; CSV keeps
+            // the original code path below untouched.
+            if ($file !== null && \App\Services\Contacts\SpreadsheetReader::isExcel($file)) {
+                $preview = (new \App\Services\Contacts\SpreadsheetReader())->preview($file);
+
+                if ($preview['total_rows'] === 0) {
+                    return response()->json(['error' => 'The file contains no data rows'], 400);
+                }
+
+                if ($preview['total_rows'] > 100000) {
+                    return response()->json(['error' => 'The file contains too many rows. Maximum is 100,000'], 400);
+                }
+
+                return response()->json($preview);
+            }
+
             $handle = fopen($file->getRealPath(), 'r');
 
             if ($handle === false) {
@@ -502,7 +519,7 @@ class ContactController extends Controller
 
         try {
             $validated = $request->validate([
-                'file' => 'required|file|mimes:csv,txt|max:51200', // 50MB
+                'file' => 'required|file|mimes:csv,txt,xlsx|max:51200', // 50MB
                 'column_mapping' => 'required|json',
                 'tag_ids' => 'nullable|array',
                 'tag_ids.*' => 'exists:contact_tags,id',
@@ -519,6 +536,14 @@ class ContactController extends Controller
 
         try {
             $file = $request->file('file');
+
+            // Convert Excel to CSV bytes so the existing storage + queue + job
+            // pipeline reads it with fgetcsv exactly as before. The original
+            // filename is preserved for display.
+            if ($file !== null && \App\Services\Contacts\SpreadsheetReader::isExcel($file)) {
+                $file = \App\Services\Contacts\SpreadsheetReader::convertExcelToCsvUpload($file);
+            }
+
             $columnMapping = json_decode($request->input('column_mapping'), true);
             
             Log::info('Starting contact import', [

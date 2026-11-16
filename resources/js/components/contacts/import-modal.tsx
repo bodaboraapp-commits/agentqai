@@ -99,9 +99,11 @@ export function ImportModal({ open, onClose, tags = [], lists = [] }: ImportModa
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Validate file type
-    if (!selectedFile.name.endsWith('.csv')) {
-      setError('Please select a CSV file');
+    // Validate file type — CSV and Excel (.xlsx) are accepted; the server
+    // converts Excel to CSV before queueing the import.
+    const lowerName = selectedFile.name.toLowerCase();
+    if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+      setError('Please select a CSV or Excel (.xlsx) file. For legacy .xls, save it as .xlsx or .csv first.');
       return;
     }
 
@@ -381,7 +383,7 @@ export function ImportModal({ open, onClose, tags = [], lists = [] }: ImportModa
                 <Input
                   id="file"
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.xlsx"
                   onChange={handleFileChange}
                   className="max-w-xs mx-auto cursor-pointer"
                   disabled={uploading}
