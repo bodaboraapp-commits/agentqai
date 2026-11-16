@@ -113,9 +113,23 @@ class CallController extends Controller
                 'excluded_ai_agent_numbers' => array_values($aiAgentNumbers),
             ]);
 
-            return response()->json([
-                'numbers' => $numbers,
-            ]);
+            $payload = ['numbers' => $numbers];
+
+            // Append-only diagnostics for the dialer: open
+            // /softphone/api/my-numbers?debug=1 while signed in to see why the
+            // list is empty (wrong user, AI-agent exclusion, DB mismatch).
+            if ($request->boolean('debug')) {
+                $payload['debug'] = [
+                    'user_id' => $userId,
+                    'user_email' => $user->email ?? null,
+                    'assigned_rows_for_user' => PhoneNumber::where('user_id', $userId)->where('status', 'assigned')->count(),
+                    'all_rows_for_user' => PhoneNumber::where('user_id', $userId)->count(),
+                    'excluded_ai_agent_numbers' => array_values($aiAgentNumbers),
+                    'provider' => app(\App\Services\Telephony\TelephonyManager::class)->provider()->value,
+                ];
+            }
+
+            return response()->json($payload);
         } catch (\Exception $e) {
             Log::error('Failed to fetch softphone numbers', [
                 'user_id' => $userId,
