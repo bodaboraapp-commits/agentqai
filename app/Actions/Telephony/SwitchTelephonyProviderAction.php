@@ -13,6 +13,7 @@ use App\Models\TwilioGlobalConfig;
 use App\Models\User;
 use App\Services\Telephony\TelephonyLock;
 use App\Services\Telephony\TelephonyManager;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -62,7 +63,9 @@ final class SwitchTelephonyProviderAction
             throw new RuntimeException($this->notConfiguredMessage($target));
         }
 
-        if (! $force) {
+        if ($force) {
+            $this->cancelInFlight();
+        } else {
             $this->assertNoWorkInFlight();
         }
 
@@ -118,7 +121,7 @@ final class SwitchTelephonyProviderAction
         if ($campaigns > 0) {
             throw new RuntimeException(
                 "There {$this->plural($campaigns, 'is a campaign', 'are campaigns')} running or scheduled. "
-                .'Pause them first, or use Reset telephony if you need to force the change.'
+                .'Pause them first, or tick "Force switch" to pause them and switch anyway.'
             );
         }
 
@@ -126,10 +129,57 @@ final class SwitchTelephonyProviderAction
 
         if ($calls > 0) {
             throw new RuntimeException(
-                "There {$this->plural($calls, 'is a call', 'are calls')} still in progress. "
-                .'Wait for them to finish before switching providers.'
+                "There {$this->plural($calls, 'is a call', 'are calls')} still in progress ({$this->statusBreakdown()}), "
+                .'usually calls left open because their provider callback never arrived. '
+                .'Tick "Force switch" to cancel them locally and switch anyway.'
             );
         }
+    }
+
+    /**
+     * Force path: nothing that was placed through the old provider may still
+     * look like it is running after the switch, or queued jobs could place it
+     * through the new account. Calls are cancelled locally (their provider
+     * callback may never come), and campaigns that would place more calls are
+     * paused/drafted — the same end state ResetTelephonyProviderAction forces.
+     */
+    private function cancelInFlight(): void
+    {
+        $campaignsPaused = DB::table('campaigns')
+            ->whereIn('status', ['running'])
+            ->update(['status' => 'paused', 'updated_at' => now()]);
+
+        $campaignsDrafted = DB::table('campaigns')
+            ->whereIn('status', ['scheduled'])
+            ->update(['status' => 'draft', 'updated_at' => now()]);
+
+        $callsCancelled = DB::table('calls')
+            ->whereIn('status', self::BLOCKING_CALL_STATUSES)
+            ->update([
+                'status' => 'canceled',
+                'ended_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        Log::warning('Telephony provider switch forced: in-flight work cancelled.', [
+            'campaigns_paused' => $campaignsPaused,
+            'campaigns_drafted' => $campaignsDrafted,
+            'calls_cancelled' => $callsCancelled,
+        ]);
+    }
+
+    private function statusBreakdown(): string
+    {
+        $counts = Call::query()
+            ->whereIn('status', self::BLOCKING_CALL_STATUSES)
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status')
+            ->map(fn (int|string $count, string $status): string => "{$count} {$status}")
+            ->values()
+            ->all();
+
+        return $counts === [] ? 'none' : implode(', ', $counts);
     }
 
     private function plural(int $count, string $one, string $many): string

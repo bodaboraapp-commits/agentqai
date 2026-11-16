@@ -186,6 +186,9 @@ export default function TelephonySettings({
   // ── Africa's Talking ───────────────────────────────────────────────────
   const [atVerifying, setAtVerifying] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
+  // Force switch cancels calls that are stuck in initiated/ringing (their
+  // provider callback never arrived) instead of refusing the switch forever.
+  const [switchForce, setSwitchForce] = useState(false);
   const {
     data: atData,
     setData: setAtData,
@@ -218,7 +221,7 @@ export default function TelephonySettings({
   const handleSwitch = (target: SwitchTarget) => {
     if (!target.configured) return;
     setSwitching(target.value);
-    router.post(target.switchUrl, { provider: target.value }, {
+    router.post(target.switchUrl, { provider: target.value, force: switchForce }, {
       preserveScroll: true,
       onFinish: () => setSwitching(null),
     });
@@ -558,6 +561,21 @@ export default function TelephonySettings({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={switchForce}
+                    onChange={(e) => setSwitchForce(e.target.checked)}
+                  />
+                  <span>
+                    <span className="font-medium">Force switch</span> — cancel calls still in progress and pause
+                    running campaigns first. Use this when calls are stuck because their provider callback never
+                    arrived; those calls are marked cancelled locally.
+                  </span>
+                </label>
+              </div>
               {switchTargets
                 .filter((t) => t.value !== 'africastalking')
                 .map((target) => (
