@@ -44,6 +44,16 @@ class NumberRequestService
      */
     public function createRequest($phoneNumber, $customer, $notes = null)
     {
+        // AT numbers are provisioned in the AT dashboard; there is no purchase
+        // API to request one through. Refuse with a readable message rather
+        // than attempting a Twilio purchase against an AT-locked install.
+        if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
+            throw new \Exception(
+                'Number requests are not available on Africa\'s Talking. Numbers are provisioned in the AT dashboard; '
+                .'an administrator assigns them in Admin → Telephony → Africa\'s Talking.'
+            );
+        }
+
         if ($phoneNumber instanceof PhoneNumber) {
             $phoneNumberModel = $phoneNumber;
         } else {

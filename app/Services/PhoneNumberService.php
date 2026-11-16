@@ -284,6 +284,17 @@ class PhoneNumberService
         // Handle both PhoneNumber model and string
         $numberString = is_string($phoneNumberOrString) ? $phoneNumberOrString : $phoneNumberOrString->number;
 
+        // Africa's Talking numbers are provisioned in the AT dashboard (KYC);
+        // AT has no number-purchase API. Assign the existing number instead —
+        // never fall through to Twilio's incomingPhoneNumbers API.
+        if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
+            throw new \RuntimeException(
+                'Africa\'s Talking numbers are provisioned in the Africa\'s Talking dashboard. '
+                .'Register and assign the existing number in Admin → Telephony → Africa\'s Talking, '
+                .'or run: php artisan telephony:africastalking --number='.$numberString.' --assign-user=you@example.com'
+            );
+        }
+
         if ($this->telephony->provider() === TelephonyProvider::PLIVO) {
             return $this->purchaseNumberFromPlivo($numberString, $friendlyName);
         }

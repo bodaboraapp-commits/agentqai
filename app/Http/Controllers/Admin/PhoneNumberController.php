@@ -788,6 +788,54 @@ class PhoneNumberController extends Controller
             return redirect()->back()->with('error', 'Please provide either an existing phone number or a new phone number to purchase.');
         }
 
+        // Africa's Talking: assign locally, never "purchase" through Twilio's
+        // incomingPhoneNumbers API. AT numbers are provisioned in the AT
+        // dashboard, so an admin-entered AT number is registered here (manual
+        // source) and handed to the user directly; no provider call, no charge.
+        if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
+            $user = \App\Models\User::findOrFail($request->user_id);
+
+            $phoneNumber = $request->filled('phone_number_id')
+                ? PhoneNumber::findOrFail($request->phone_number_id)
+                : PhoneNumber::where('number', $request->phone_number)->first();
+
+            if (! $phoneNumber && $request->filled('phone_number')) {
+                $digits = (string) $request->phone_number;
+                $phoneNumber = PhoneNumber::create([
+                    'number' => $digits,
+                    'formatted_number' => PhoneNumberHelper::format($digits),
+                    'friendly_name' => $request->friendly_name ?: $digits,
+                    'status' => 'available',
+                    'provider' => TelephonyProvider::AFRICASTALKING->value,
+                    'source' => 'manual',
+                    'capabilities' => ['voice' => true, 'sms' => true, 'mms' => false],
+                    'monthly_cost' => 0,
+                ]);
+            }
+
+            if (! $phoneNumber) {
+                return redirect()->back()->with('error', 'That number is not registered in this installation. Enter it again as a new number to register it as an Africa\'s Talking number.');
+            }
+
+            $phoneNumber->update([
+                'user_id' => $user->id,
+                'status' => 'assigned',
+                'assigned_at' => now(),
+                'provider' => TelephonyProvider::AFRICASTALKING->value,
+            ]);
+
+            Log::info('Africa\'s Talking number assigned locally (no provider purchase)', [
+                'number' => $phoneNumber->number,
+                'user_id' => $user->id,
+                'admin_id' => $request->user()?->id,
+            ]);
+
+            return redirect()->back()->with(
+                'success',
+                "Assigned {$phoneNumber->number} to {$user->email}. It now appears in their softphone."
+            );
+        }
+
         try {
             $user = \App\Models\User::findOrFail($request->user_id);
             $skipCreditDeduction = (bool) $request->input('skip_credit_deduction', false);
