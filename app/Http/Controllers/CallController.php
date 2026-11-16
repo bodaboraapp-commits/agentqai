@@ -103,6 +103,16 @@ class CallController extends Controller
                     ];
                 });
 
+            // Explain empty dialers without guessing: name the user, the
+            // numbers found, and the AI-agent numbers excluded.
+            Log::info('Softphone numbers fetched', [
+                'user_id' => $userId,
+                'user_email' => $user->email ?? null,
+                'count' => $numbers->count(),
+                'numbers' => $numbers->pluck('number')->all(),
+                'excluded_ai_agent_numbers' => array_values($aiAgentNumbers),
+            ]);
+
             return response()->json([
                 'numbers' => $numbers,
             ]);
