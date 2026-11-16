@@ -14,11 +14,21 @@ class DeepgramService
 
     public function __construct()
     {
-        $this->apiKey = config('deepgram.api_key');
-        $this->apiUrl = config('deepgram.api_url');
-        $this->config = config('deepgram.streaming');
+        $this->apiKey = (string) config('deepgram.api_key');
+        $this->apiUrl = (string) config('deepgram.api_url');
+        $this->config = (array) config('deepgram.streaming', []);
 
-        if (empty($this->apiKey)) {
+        // Deliberately NOT throwing here: this service is injected into
+        // CallStateManager, which is injected into the whole AI-agent call
+        // controller. Throwing at construction made every read-only endpoint
+        // (call log list, active calls, stats) 500 on installations without a
+        // Deepgram key — including providers where AI voice agents are not
+        // used at all. Only methods that actually talk to Deepgram require it.
+    }
+
+    private function ensureConfigured(): void
+    {
+        if ($this->apiKey === '') {
             throw new Exception('Deepgram API key is not configured');
         }
     }
@@ -28,6 +38,8 @@ class DeepgramService
      */
     public function getStreamingUrl(): string
     {
+        $this->ensureConfigured();
+
         $params = http_build_query([
             'model' => $this->config['model'],
             'language' => $this->config['language'],
@@ -49,6 +61,8 @@ class DeepgramService
      */
     public function getAuthHeader(): string
     {
+        $this->ensureConfigured();
+
         return "Token {$this->apiKey}";
     }
 
@@ -58,6 +72,8 @@ class DeepgramService
     public function transcribeFile(string $audioUrl): ?array
     {
         try {
+            $this->ensureConfigured();
+
             $response = Http::withHeaders([
                 'Authorization' => $this->getAuthHeader(),
                 'Content-Type' => 'application/json',
@@ -128,6 +144,8 @@ class DeepgramService
     public function test(): bool
     {
         try {
+            $this->ensureConfigured();
+
             $response = Http::withHeaders([
                 'Authorization' => $this->getAuthHeader(),
             ])->get("{$this->apiUrl}/projects");

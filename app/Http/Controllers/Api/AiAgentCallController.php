@@ -23,10 +23,13 @@ class AiAgentCallController extends Controller
 
     private TwilioService $twilioService;
 
-    public function __construct(CallStateManager $stateManager, TwilioService $twilioService)
+    private TelephonyManager $telephony;
+
+    public function __construct(CallStateManager $stateManager, TwilioService $twilioService, TelephonyManager $telephony)
     {
         $this->stateManager = $stateManager;
         $this->twilioService = $twilioService;
+        $this->telephony = $telephony;
     }
 
     /**
@@ -85,6 +88,16 @@ class AiAgentCallController extends Controller
     {
         $call = $this->visibleCalls()->with(['agent', 'contact', 'campaign', 'conversations'])
             ->findOrFail($id);
+
+        // Twilio-only live sync. On other providers the row is maintained by
+        // that provider's callbacks (and there is no Twilio SID to fetch).
+        if ($this->telephony->provider() !== TelephonyProvider::TWILIO) {
+            return response()->json([
+                'call' => $call,
+                'transcript' => $call->getTranscript(),
+                'stats' => $this->stateManager->getCallStats($call),
+            ]);
+        }
 
         // Sync with Twilio to get real-time data
         try {
@@ -402,6 +415,14 @@ class AiAgentCallController extends Controller
     public function sync($id)
     {
         $call = $this->visibleCalls()->with(['agent', 'contact', 'campaign'])->findOrFail($id);
+
+        if ($this->telephony->provider() !== TelephonyProvider::TWILIO) {
+            return response()->json([
+                'message' => 'Live sync is only available on Twilio. On '.$this->telephony->provider()->label()
+                    .' this call is updated by the provider\'s callbacks.',
+                'call' => $call->load('conversations'),
+            ]);
+        }
 
         try {
             // Get active Twilio configuration

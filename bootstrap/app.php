@@ -68,6 +68,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Africa's Talking callbacks (AT posts without a CSRF token).
             'webhooks/africastalking/*',
             'at-xml/*',
+            // Authenticated softphone->app call-completion report (the browser
+            // is a session client with an XSRF cookie; exempt so a stale token
+            // can never leave a completed call stuck at "ringing").
+            'api/africastalking/*',
             'webhooks/payment/*',
             'twiml/*',
             'plivo-xml/*',

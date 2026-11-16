@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AfricaSTalking\AfricaSTalkingSessionController;
 use App\Http\Controllers\Admin\TelephonySettingsController;
+use App\Http\Controllers\Api\SoftphoneCallStatusController;
 use App\Http\Controllers\CallController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,13 @@ use Illuminate\Support\Facades\Route;
 | supported verification (config africastalking.webhook). The provider is not
 | selectable while config africastalking.enabled is false.
 */
+
+// The browser softphone reports the outcome of an AT WebRTC call (AT does not
+// reliably send per-call status callbacks for the client session). Session
+// authenticated + CSRF protected like the rest of the web app.
+Route::middleware('auth')
+    ->post('/api/africastalking/call-completed', [SoftphoneCallStatusController::class, 'completed'])
+    ->name('africastalking.call-completed');
 
 Route::prefix('at-xml')->name('at-xml.')->middleware(['throttle:120,1'])->group(function (): void {
     // The single URL an AT number's "Callback" setting must point at.

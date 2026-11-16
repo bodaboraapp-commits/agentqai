@@ -194,7 +194,9 @@ export default function Show({ call, contact, breadcrumbs }: Props) {
                             <div>
                                 <p className="text-sm text-muted-foreground">{t('calls.show_ended_at')}</p>
                                 <p className="font-medium">
-                                    {new Date(callData.ended_at).toLocaleString()}
+                                    {callData.ended_at
+                                        ? new Date(callData.ended_at).toLocaleString()
+                                        : '—'}
                                 </p>
                             </div>
                         </CardContent>

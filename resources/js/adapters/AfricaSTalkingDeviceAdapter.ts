@@ -11,6 +11,7 @@
  * Methods: Client(token), client.call/answer/hangup/dtmf/mute/unmute/hold/unhold/destroy
  * Events: ready, calling, incomingcall, callaccepted, hangup, offline, closed
  */
+import axios from 'axios';
 import type { VoiceDeviceAdapter, VoiceCall, CallStatus } from '@/types/telephony';
 
 type EventHandler = (...args: unknown[]) => void;
@@ -155,6 +156,7 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
   private client: any = null;
   private registered = false;
   private activeCall: AfricaSTalkingCall | null = null;
+  private callStartedAt: number | null = null;
   private listeners: Map<string, Set<EventHandler>> = new Map();
 
   isRegistered(): boolean {
@@ -254,6 +256,31 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
         console.warn('[AT] hangup:', cause ? JSON.stringify(cause) : '(no cause)', cause?.code, cause?.reason);
         const call = this.activeCall;
         this.activeCall = null;
+
+        // AT does not reliably send a status callback for the client's own
+        // call record, so report the outcome to the app: without this the Call
+        // row created by /calls/initiate stays "initiated" and never shows up
+        // as completed in Call Logs.
+        if (call?.appCallId) {
+          const durationSeconds = this.callStartedAt === null
+            ? undefined
+            : Math.max(0, Math.round((Date.now() - this.callStartedAt) / 1000));
+
+          void axios.post('/api/africastalking/call-completed', {
+            call_id: Number(call.appCallId),
+            // AT 200 "Session Terminated" is a normal hang-up; anything else
+            // is recorded as a failed call with the provider's reason.
+            status: cause?.code != null && Number(cause.code) !== 200 ? 'failed' : 'completed',
+            duration_seconds: durationSeconds,
+            hangup_reason: typeof cause?.reason === 'string' ? cause.reason : undefined,
+            hangup_code: cause?.code != null ? String(cause.code) : undefined,
+          }).catch(() => {
+            // Call logging must never break the softphone UI.
+          });
+        }
+
+        this.callStartedAt = null;
+
         if (call) {
           call.status = 'ended';
           call.emit('disconnected', cause);
@@ -312,6 +339,7 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
     call.toNumber = to;
     call.status = 'dialing';
     this.activeCall = call;
+    this.callStartedAt = Date.now();
 
     // The softphone passes the app Call id as `call_id`; keep it for
     // disposition/call-log correlation (AT itself does not carry it).

@@ -16,14 +16,25 @@ class ConversationEngine
     private string $apiUrl;
     private array $fallbackModels;
 
-    public function __construct(AiAgent $agent)
+    public function __construct(?AiAgent $agent = null)
     {
-        $this->apiKey = config('openrouter.api_key');
+        $this->apiKey = (string) config('openrouter.api_key');
         $this->apiUrl = 'https://openrouter.ai/api/v1';
-        $this->fallbackModels = config('openrouter.fallback_models', []);
+        $this->fallbackModels = (array) config('openrouter.fallback_models', []);
 
-        if (empty($this->apiKey)) {
-            throw new Exception("OpenRouter API key is not configured for agent {$agent->name}");
+        // Lazy by design: this service is injected into CallStateManager, which
+        // is injected into the whole AI-agent call controller. Throwing at
+        // construction made every read-only endpoint (call log list, active
+        // calls, stats) 500 when no OpenRouter key was configured — and the
+        // container could not even supply the required AiAgent. Only methods
+        // that actually call OpenRouter require the key.
+    }
+
+    private function ensureConfigured(?AiAgent $agent = null): void
+    {
+        if ($this->apiKey === '') {
+            $suffix = $agent !== null ? " for agent {$agent->name}" : '';
+            throw new Exception('OpenRouter API key is not configured'.$suffix);
         }
     }
 
@@ -36,6 +47,8 @@ class ConversationEngine
         string $userMessage
     ): ?array {
         try {
+            $this->ensureConfigured($agent);
+
             // Build conversation history
             $messages = $this->buildMessageHistory($agent, $call, $userMessage);
             
@@ -505,6 +518,8 @@ class ConversationEngine
     public function test(): bool
     {
         try {
+            $this->ensureConfigured();
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
                 'HTTP-Referer' => config('app.url'),
