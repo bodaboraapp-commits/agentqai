@@ -77,19 +77,53 @@ class AfricaSTalkingCallXmlGenerator implements CallXmlInterface
     }
 
     /**
-     * The <Say> voice attribute: AT's voice field, falling back to config.
+     * The <Say> voice attribute.
+     *
+     * Twilio/Amazon/Google voice names ("alice", "Polly.Joanna", …) are NOT
+     * valid AT voices; sending one makes AT reject the whole XML document,
+     * which aborts the call after ~1 second. Only AT-looking values are
+     * forwarded; otherwise the attribute is omitted and AT uses its own
+     * default voice.
      */
     private function voice(array $options): ?string
     {
-        $voice = $options['voice'] ?? null;
+        $candidates = [
+            $options['voice'] ?? null,
+            config('africastalking.voice.tts.default_voice'),
+        ];
 
-        if (is_string($voice) && trim($voice) !== '') {
-            return $voice;
+        foreach ($candidates as $candidate) {
+            if (! is_string($candidate) || trim($candidate) === '') {
+                continue;
+            }
+
+            if ($this->isAfricaSTalkingVoice($candidate)) {
+                return trim($candidate);
+            }
         }
 
-        $default = (string) config('africastalking.voice.tts.default_voice', '');
+        return null;
+    }
 
-        return $default !== '' ? $default : null;
+    /**
+     * Twilio/Polly/Google-style names never reach AT.
+     */
+    private function isAfricaSTalkingVoice(string $voice): bool
+    {
+        $normalized = strtolower(trim($voice));
+
+        if (in_array($normalized, ['alice', 'man', 'woman'], true)) {
+            // "man"/"woman" are plain AT voices; "alice" is Twilio-only.
+            return $normalized !== 'alice';
+        }
+
+        foreach (['polly.', 'google.', 'amazon.', 'standard-'] as $twilioStyle) {
+            if (str_contains($normalized, $twilioStyle)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

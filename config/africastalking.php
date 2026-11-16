@@ -76,9 +76,11 @@ return [
         //   'client:'  → "client:user_12"
         'webrtc_client_prefix' => env('AFRICASTALKING_CLIENT_PREFIX', ''),
 
-        // AT <Say> voice + <GetDigits> defaults.
+        // AT <Say> voice + <GetDigits> defaults. Empty means "let AT use its
+        // own default voice" — Twilio/Polly voice names must never be sent to
+        // AT, which rejects the whole XML document for an unknown voice.
         'tts' => [
-            'default_voice' => env('AFRICASTALKING_TTS_VOICE', 'en-US-Standard-A'),
+            'default_voice' => env('AFRICASTALKING_TTS_VOICE', ''),
             'default_language' => env('AFRICASTALKING_TTS_LANGUAGE', 'en-US'),
         ],
 
