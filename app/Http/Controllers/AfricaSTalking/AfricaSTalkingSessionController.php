@@ -60,7 +60,7 @@ class AfricaSTalkingSessionController extends Controller
         ));
 
         if (in_array($state, ['completed', 'failed', 'busy', 'noanswer', 'no-answer', 'cancelled', 'canceled'], true)) {
-            $this->applyTerminalSessionState($state, $from, $to, $request);
+            $this->applyTerminalSessionState($state, $from, $to, $request, $sessionId);
 
             return $this->xml('<Response/>');
         }
@@ -286,8 +286,46 @@ class AfricaSTalkingSessionController extends Controller
     /**
      * Record the call outcome carried by AT's terminal session callback.
      */
-    private function applyTerminalSessionState(string $state, ?string $from, ?string $to, \Illuminate\Http\Request $request): void
+    private function applyTerminalSessionState(string $state, ?string $from, ?string $to, \Illuminate\Http\Request $request, string $sessionId = ''): void
     {
+        // Inbound calls are created with the AT session id on the Call row, so
+        // match by session first — otherwise an inbound call stayed 'ringing'
+        // forever because this query only looked at outbound rows.
+        if ($sessionId !== '') {
+            $bySession = Call::query()
+                ->where('provider', 'africastalking')
+                ->where(function ($query) use ($sessionId): void {
+                    $query->where('provider_call_sid', $sessionId)
+                        ->orWhere('twilio_call_sid', $sessionId);
+                })
+                ->whereIn('status', ['initiated', 'ringing', 'in-progress'])
+                ->latest('id')
+                ->first();
+
+            if ($bySession !== null) {
+                $duration = $request->input('durationInSeconds')
+                    ?? $request->input('dialDurationInSeconds')
+                    ?? $request->input('duration');
+
+                $bySession->forceFill([
+                    'status' => $state === 'completed' ? 'completed' : 'failed',
+                    'duration_seconds' => is_numeric($duration) ? (int) $duration : $bySession->duration_seconds,
+                    'ended_at' => now(),
+                    'error_message' => $state === 'completed' ? null : ucfirst($state),
+                ])->save();
+
+                \Illuminate\Support\Facades\Log::info('AT session: terminal state applied (by session)', [
+                    'call_id' => $bySession->id,
+                    'direction' => $bySession->direction,
+                    'state' => $state,
+                    'duration' => $duration,
+                    'hangup_cause' => $request->input('hangupCause'),
+                ]);
+
+                return;
+            }
+        }
+
         $clientUserId = $this->clientUserIdFromCaller($from);
 
         $query = Call::query()

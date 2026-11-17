@@ -873,6 +873,29 @@ class TwimlController extends Controller
             $call->forceFill(['transcript_status' => 'failed'])->save();
         }
 
+        // Make the voicemail actionable without a human listening first: email
+        // the number owner the transcript + recording link. Mail failures must
+        // never break the AT callback (AT would drop the call).
+        try {
+            $owner = $call->user;
+            if ($owner !== null && ! empty($owner->email)) {
+                $body = "New inbound voicemail on {$call->to_number}\n\n"
+                    ."From: {$call->from_number}\n"
+                    .'Duration: '.($call->duration_seconds ?? 0)."s\n"
+                    ."Recording: {$recordingUrl}\n\n"
+                    ."Transcript:\n".($call->transcript_text ?: '(transcription unavailable)');
+
+                \Illuminate\Support\Facades\Mail::raw(
+                    $body,
+                    fn ($message) => $message->to($owner->email)->subject('New inbound voicemail from '.$call->from_number)
+                );
+
+                Log::info('AT voicemail notification sent', ['call_id' => $call->id, 'to' => $owner->email]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('AT voicemail notification failed', ['call_id' => $call->id, 'error' => $e->getMessage()]);
+        }
+
         return response($this->xmlOnly('<Response><Say>Thank you. Goodbye.</Say></Response>'), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
     }
 
