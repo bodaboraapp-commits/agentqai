@@ -410,15 +410,30 @@ class MakeCampaignCallJob implements ShouldQueue
      */
     private function resolveAfricaSTalkingCredentials(): array
     {
-        $config = TelephonyProviderConfig::where('name', 'africastalking')->first();
-        $username = $config?->credential('username');
-        $apiKey = $config?->credential('api_key');
+        // Use the provider record the rest of the app uses, but tolerate both
+        // credential shapes ("username"/"api_key" from the admin form and
+        // "account_id"/"auth_token" from the enum credentialFields) and skip
+        // empty/legacy rows: a stray earlier 'africastalking' row with no
+        // credentials made campaign calls throw "Africa's Talking is not
+        // configured" while the softphone (reading a different path) worked.
+        $configs = TelephonyProviderConfig::query()
+            ->where('name', 'africastalking')
+            ->orderByDesc('updated_at')
+            ->get();
 
-        if (! $username || ! $apiKey) {
-            throw new \Exception('Africa\'s Talking is not configured for this platform. Ask an administrator to configure it in Admin → Telephony.');
+        foreach ($configs as $config) {
+            $username = $config->credential('username') ?? $config->credential('account_id');
+            $apiKey = $config->credential('api_key') ?? $config->credential('auth_token');
+
+            if ($username && $apiKey) {
+                return [
+                    'username' => (string) $username,
+                    'api_key' => (string) $apiKey,
+                ];
+            }
         }
 
-        return ['username' => $username, 'api_key' => $apiKey];
+        throw new \Exception('Africa\'s Talking is not configured for this platform. Ask an administrator to configure it in Admin → Telephony.');
     }
 
     /**

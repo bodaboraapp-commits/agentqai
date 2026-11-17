@@ -84,6 +84,19 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             // are expected to exit and be respawned.
             'restart_signal' => \Illuminate\Support\Facades\Cache::get('illuminate:queue:restart'),
         ],
+        'africastalking_config_rows' => \App\Models\TelephonyProviderConfig::query()
+            ->whereIn('name', ['africastalking', 'africa_stalking', "africa's talking"])
+            ->get()
+            ->map(fn ($config) => [
+                'id' => $config->id,
+                'name' => $config->name,
+                'enabled' => $config->enabled,
+                'updated_at' => optional($config->updated_at)->toDateTimeString(),
+                'credential_keys' => array_keys((array) ($config->credentials ?? [])),
+                'has_username' => (bool) ($config->credential('username') ?? $config->credential('account_id')),
+                'has_api_key' => (bool) ($config->credential('api_key') ?? $config->credential('auth_token')),
+            ])
+            ->all(),
         'latest_failed_calls' => \App\Models\Call::query()
             ->where('status', 'failed')
             ->latest('id')
