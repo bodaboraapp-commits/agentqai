@@ -29,11 +29,20 @@ class PhoneValidationService
                 // Normalize the country code prefix (e.g. '+1' => '1')
                 $cc = ltrim($defaultCountryCode, '+');
 
-                // NANP (country code '1'): accept 10-digit local numbers and
-                // 11-digit national format (with leading '1'). Never use ltrim()
-                // to strip leading digits — that can wrongly chop off area codes
-                // for other country codes.
-                if ($cc === '1') {
+                // Already an international number typed without the leading
+                // '+': e.g. "254756112633" on a +254 installation. Treating
+                // it as a national number used to produce "+1254756112633",
+                // which AT rejects (campaign dials failed on exactly that).
+                if (str_starts_with($cleaned, $cc) && strlen($cleaned) >= strlen($cc) + 7) {
+                    $cleaned = '+' . $cleaned;
+                } elseif ($cc !== '1' && str_starts_with($cleaned, '0') && strlen($cleaned) === strlen($cc) + 9) {
+                    // National trunk format: 0756112633 -> +254756112633
+                    $cleaned = '+' . $cc . substr($cleaned, 1);
+                } elseif ($cc === '1') {
+                    // NANP (country code '1'): accept 10-digit local numbers and
+                    // 11-digit national format (with leading '1'). Never use ltrim()
+                    // to strip leading digits — that can wrongly chop off area codes
+                    // for other country codes.
                     if (strlen($cleaned) === 11 && str_starts_with($cleaned, '1')) {
                         $cleaned = '+' . $cleaned;
                     } else {

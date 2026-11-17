@@ -24,6 +24,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Country Code
+    |--------------------------------------------------------------------------
+    |
+    | Used when a phone number has no international prefix. On an AT (Kenya)
+    | installation this must be +254: the sanitizer's old +1 default turned
+    | campaign destinations like +254756112633 into +1254756112633, which AT
+    | rejects (Call Logs showed exactly that).
+    |
+    */
+    'default_country_code' => env('DEFAULT_COUNTRY_CODE', '+254'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Provider-Specific Settings
     |--------------------------------------------------------------------------
     |

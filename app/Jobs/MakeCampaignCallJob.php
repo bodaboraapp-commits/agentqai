@@ -95,7 +95,7 @@ class MakeCampaignCallJob implements ShouldQueue
             }
 
             // 2. VALIDATE AND SANITIZE PHONE NUMBER
-            $phoneResult = $phoneValidator->sanitize($this->contact->phone_number);
+            $phoneResult = $phoneValidator->sanitize($this->contact->phone_number, (string) config('telephony.default_country_code', '+254'));
 
             if (! $phoneResult['success']) {
                 // Invalid phone number - skip this contact

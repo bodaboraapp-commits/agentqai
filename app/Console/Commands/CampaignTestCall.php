@@ -37,6 +37,20 @@ class CampaignTestCall extends Command
         $identifier = (string) $this->argument('campaign');
         $number = trim((string) $this->argument('number'));
 
+        // Normalize before storing: campaign destinations entered without the
+        // international prefix used to become +1 numbers (Call Logs showed
+        // +1254756112633 for +254756112633), which AT rejects.
+        $phone = app(\App\Services\PhoneValidationService::class)
+            ->sanitize($number, (string) config('telephony.default_country_code', '+254'));
+
+        if (! $phone['success']) {
+            $this->error('Invalid destination number: '.$phone['error']);
+
+            return self::FAILURE;
+        }
+
+        $number = (string) $phone['formatted'];
+
         $campaign = Campaign::query()
             ->where('id', is_numeric($identifier) ? (int) $identifier : -1)
             ->orWhere('name', $identifier)
