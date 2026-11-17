@@ -115,7 +115,8 @@ class CampaignRunSync extends Command
 
         $initiated = collect($rows)->where(2, 'initiated')->count() + collect($rows)->where(2, 'ringing')->count();
         $failed = collect($rows)->where(2, 'failed')->count();
-        $this->info("Placed: {$initiated}  Failed: {$failed}  (total {$rows ? count($rows) : 0})");
+        $total = count($rows);
+        $this->info("Placed: {$initiated}  Failed: {$failed}  (total {$total})");
 
         if ($failed > 0) {
             $this->line('The Error column above is also stored on the Call row (Call Logs).');
