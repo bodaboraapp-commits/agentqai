@@ -172,6 +172,7 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             'forward_to' => config('africastalking.voice.inbound.forward_to'),
             'voicemail_max_seconds' => config('africastalking.voice.inbound.voicemail_max_seconds'),
             'client_prefix' => config('africastalking.voice.webrtc_client_prefix'),
+            'ivr' => config('africastalking.voice.inbound.ivr'),
             'latest_inbound_calls' => \App\Models\Call::query()
                 ->where('direction', 'inbound')
                 ->latest('id')
@@ -248,6 +249,11 @@ Route::prefix('at-xml')->name('at-xml.')->middleware(['throttle:120,1'])->group(
     // store the recording + Deepgram transcript on the Call row.
     Route::match(['get', 'post'], '/voicemail/{call}', [\App\Http\Controllers\TwimlController::class, 'atVoicemailCallback'])
         ->name('voicemail');
+
+    // AT GetDigits callBackUrl target for the inbound IVR (1 = forward,
+    // 2 = voicemail, timeout/invalid fallbacks).
+    Route::match(['get', 'post'], '/ivr/{call}', [\App\Http\Controllers\TwimlController::class, 'atIvrCallback'])
+        ->name('ivr');
 });
 
 // AT's per-number "Events" URL (and the callBackUrl of GetDigits/Record XML).

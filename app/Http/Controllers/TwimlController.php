@@ -717,17 +717,13 @@ class TwimlController extends Controller
             ]);
 
             if ($forwardTargets !== [] && in_array($mode, ['forward', 'auto'], true)) {
-                $dialOptions = ['callerId' => $call->to_number, 'timeout' => 30];
-                if (count($forwardTargets) > 1) {
-                    // AT rings the numbers in order until one answers.
-                    $dialOptions['sequential'] = 'true';
-                }
+                return $this->respondWithXml($this->atForwardXml($call, $forwardTargets));
+            }
 
-                return $this->respondWithXml($callXml->buildResponse([
-                    $callXml->say('Connecting your call. Please wait.', ['language' => null]),
-                    $callXml->dial(implode(',', $forwardTargets), $dialOptions),
-                    $callXml->say('The person you are trying to reach is not available. Goodbye!', ['language' => null]),
-                ]));
+            // IVR: let the caller choose operator (forward) or voicemail. Works
+            // entirely on AT GetDigits, so it is usable before SIP phones exist.
+            if ($mode === 'ivr') {
+                return $this->respondWithXml($this->atIvrXml($call));
             }
 
             // No forward target (or voicemail mode): record the caller instead
@@ -792,6 +788,146 @@ class TwimlController extends Controller
         ]);
 
         return $this->respondWithXml($twiml);
+    }
+
+    /**
+     * Configured forward destinations for AT inbound (comma/semicolon list).
+     *
+     * @return array<int, string>
+     */
+    private function atForwardTargets(): array
+    {
+        $raw = trim((string) config('africastalking.voice.inbound.forward_to'));
+
+        return array_values(array_filter(array_map('trim', preg_split('/[,;]+/', $raw) ?: [])));
+    }
+
+    /**
+     * AT inbound forward document; multiple targets ring sequentially.
+     *
+     * @param  array<int, string>  $targets
+     */
+    private function atForwardXml(Call $call, array $targets): string
+    {
+        $callXml = app(\App\Services\Telephony\TelephonyManager::class)->callXml();
+
+        $dialOptions = ['callerId' => $call->to_number, 'timeout' => 30];
+        if (count($targets) > 1) {
+            // AT rings the numbers in order until one answers.
+            $dialOptions['sequential'] = 'true';
+        }
+
+        \Illuminate\Support\Facades\Log::info('AT inbound: forwarding', [
+            'call_id' => $call->id,
+            'targets' => $targets,
+        ]);
+
+        return $callXml->buildResponse([
+            $callXml->say('Connecting your call. Please wait.', ['language' => null]),
+            $callXml->dial(implode(',', $targets), $dialOptions),
+            $callXml->say('The person you are trying to reach is not available. Goodbye!', ['language' => null]),
+        ]);
+    }
+
+    /**
+     * AT inbound IVR document: GetDigits prompt (1 = operator, 2 = voicemail).
+     */
+    private function atIvrXml(Call $call, int $attempt = 0, ?string $lead = null): string
+    {
+        $greeting = trim((string) config('africastalking.voice.inbound.ivr.greeting'));
+        if ($greeting === '') {
+            $greeting = 'Welcome. Press 1 to speak to an operator, or press 2 to leave a voicemail.';
+        }
+
+        $text = $lead !== null && $lead !== '' ? $lead.' '.$greeting : $greeting;
+        $timeout = max(3, (int) config('africastalking.voice.inbound.ivr.timeout_seconds', 8));
+
+        $action = route('at-xml.ivr', ['call' => $call->id, 'attempt' => $attempt]);
+
+        $callXml = app(\App\Services\Telephony\TelephonyManager::class)->callXml();
+
+        \Illuminate\Support\Facades\Log::info('AT inbound: IVR prompt', [
+            'call_id' => $call->id,
+            'attempt' => $attempt,
+            'timeout' => $timeout,
+        ]);
+
+        return $callXml->buildResponse([
+            $callXml->say($text, [
+                'language' => null,
+                'dtmf' => [
+                    'action' => $action,
+                    'num_digits' => 1,
+                    'timeout' => $timeout,
+                ],
+            ]),
+        ]);
+    }
+
+    /**
+     * AT posts the caller's keypress here (GetDigits callBackUrl).
+     * 1 → forward to operator(s); 2 → voicemail; timeout/invalid → configured
+     * fallback (voicemail by default).
+     */
+    public function atIvrCallback(Request $request, int $callId): Response
+    {
+        $call = Call::query()->find($callId);
+
+        if ($call === null) {
+            return response($this->xmlOnly('<Response/>'), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        $digits = trim((string) (
+            $request->input('digits')
+            ?? $request->input('Digits')
+            ?? $request->input('dtmfDigits')
+            ?? $request->input('dtmf')
+            ?? ''
+        ));
+        $attempt = (int) $request->query('attempt', 0);
+
+        \Illuminate\Support\Facades\Log::info('AT inbound: IVR selection', [
+            'call_id' => $call->id,
+            'digits' => $digits,
+            'attempt' => $attempt,
+            'is_active' => $request->input('isActive'),
+        ]);
+
+        $targets = $this->atForwardTargets();
+
+        if ($digits === '1' && $targets !== []) {
+            return response($this->atForwardXml($call, $targets), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        if ($digits === '2') {
+            return response($this->atVoicemailXml($call), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        if ($digits === '') {
+            // Timeout: follow the configured action, defaulting to voicemail.
+            $action = (string) config('africastalking.voice.inbound.ivr.timeout_action', 'voicemail');
+            if ($action === 'forward' && $targets !== []) {
+                return response($this->atForwardXml($call, $targets), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+            }
+
+            return response($this->atVoicemailXml($call), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        // Invalid digit: offer the menu again, then fall back.
+        if ($attempt < (int) config('africastalking.voice.inbound.ivr.max_retries', 1)) {
+            return response(
+                $this->atIvrXml($call, $attempt + 1, 'Sorry, that was not a valid choice.'),
+                200,
+                ['Content-Type' => 'application/xml; charset=utf-8']
+            );
+        }
+
+        $fallback = (string) config('africastalking.voice.inbound.ivr.invalid_action', 'voicemail');
+        if ($fallback === 'forward' && $targets !== []) {
+            return response($this->atForwardXml($call, $targets), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        return response($this->atVoicemailXml($call), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
     }
 
     /**

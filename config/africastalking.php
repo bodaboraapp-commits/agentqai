@@ -127,6 +127,18 @@ return [
             'forward_to' => env('AFRICASTALKING_INBOUND_FORWARD'),
             'greeting' => env('AFRICASTALKING_INBOUND_GREETING', 'No one is available to take your call. Please leave a message after the tone.'),
             'voicemail_max_seconds' => (int) env('AFRICASTALKING_INBOUND_VOICEMAIL_MAX', 45),
+
+            // Optional IVR (mode=ivr): "press 1 for an operator, 2 for
+            // voicemail" before falling back to forward/voicemail.
+            'ivr' => [
+                'greeting' => env('AFRICASTALKING_INBOUND_IVR_GREETING', 'Welcome. Press 1 to speak to an operator, or press 2 to leave a voicemail.'),
+                'timeout_seconds' => (int) env('AFRICASTALKING_INBOUND_IVR_TIMEOUT', 8),
+                // What to do when nothing is pressed.
+                'timeout_action' => env('AFRICASTALKING_INBOUND_IVR_TIMEOUT_ACTION', 'voicemail'),
+                // What to do after the caller presses an invalid key twice.
+                'invalid_action' => env('AFRICASTALKING_INBOUND_IVR_INVALID_ACTION', 'voicemail'),
+                'max_retries' => (int) env('AFRICASTALKING_INBOUND_IVR_MAX_RETRIES', 1),
+            ],
         ],
 
         // AT <Say> voice + <GetDigits> defaults. Empty means "let AT use its
