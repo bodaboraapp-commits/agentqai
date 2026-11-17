@@ -31,7 +31,87 @@ Route::middleware('auth')
     ->post('/api/africastalking/call-completed', [SoftphoneCallStatusController::class, 'completed'])
     ->name('africastalking.call-completed');
 
-// Admin deploy check: proves which code the PHP process is actually running
+// Admin-only, worker-free campaign dial used to diagnose the campaign path
+// from the web process (current code, no queue worker): reports the locked
+// provider, whether AT credentials resolve here, and the resulting Call row or
+// exception. Open in the browser while signed in as admin.
+Route::middleware(['auth', 'role:admin'])->get('/admin/campaigns/dial-now', function () {
+    $request = request();
+    $campaignId = (string) $request->query('campaign', '');
+    $rawNumber = (string) $request->query('number', '');
+
+    $campaign = \App\Models\Campaign::query()
+        ->where('id', is_numeric($campaignId) ? (int) $campaignId : -1)
+        ->orWhere('name', $campaignId)
+        ->first();
+
+    if ($campaign === null) {
+        return response()->json(['error' => 'campaign not found', 'campaign' => $campaignId], 404);
+    }
+
+    $phone = app(\App\Services\PhoneValidationService::class)
+        ->sanitize($rawNumber, (string) config('telephony.default_country_code', '+254'));
+
+    if (! $phone['success']) {
+        return response()->json(['error' => 'invalid number', 'detail' => $phone['error']], 422);
+    }
+
+    $number = (string) $phone['formatted'];
+
+    $atRow = \App\Models\TelephonyProviderConfig::query()->where('name', 'africastalking')->latest('id')->first();
+
+    $contact = \App\Models\CampaignContact::query()->firstOrCreate(
+        ['campaign_id' => $campaign->id, 'phone_number' => $number],
+        ['status' => 'pending', 'call_attempts' => 0]
+    );
+    $contact->update(['status' => 'pending', 'call_attempts' => 0]);
+
+    $originalStatus = $campaign->status;
+    if ($campaign->status !== 'running') {
+        $campaign->update(['status' => 'running']);
+    }
+
+    $error = null;
+    try {
+        \App\Jobs\MakeCampaignCallJob::dispatchSync($campaign, $contact);
+    } catch (\Throwable $e) {
+        $error = get_class($e).': '.$e->getMessage();
+    } finally {
+        if ($campaign->status === 'running' && $originalStatus !== 'running' && $originalStatus !== 'draft') {
+            $campaign->update(['status' => $originalStatus]);
+        }
+    }
+
+    $contact->refresh();
+    $call = \App\Models\Call::query()
+        ->where('campaign_contact_id', $contact->id)
+        ->latest('id')
+        ->first();
+
+    return response()->json([
+        'campaign' => ['id' => $campaign->id, 'name' => $campaign->name, 'from_number' => $campaign->from_number],
+        'number' => $number,
+        'provider' => app(\App\Services\Telephony\TelephonyManager::class)->provider()->value,
+        'at_config' => [
+            'row_id' => $atRow?->id,
+            'has_username' => (bool) ($atRow?->credential('username') ?? $atRow?->credential('account_id')),
+            'has_api_key' => (bool) ($atRow?->credential('api_key') ?? $atRow?->credential('auth_token')),
+        ],
+        'job_exception' => $error,
+        'contact' => ['id' => $contact->id, 'status' => $contact->status],
+        'call' => $call === null ? null : [
+            'id' => $call->id,
+            'status' => $call->status,
+            'provider' => $call->provider,
+            'to' => $call->to_number,
+            'from' => $call->from_number,
+            'provider_call_sid' => $call->provider_call_sid,
+            'error' => $call->error_message,
+        ],
+    ]);
+})->name('africastalking.admin-campaign-dial-now');
+
+
 // (git ref + file mtimes + presence of recent methods), because stale OPcache
 // on shared hosting can keep executing old classes after `git pull`.
 Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
