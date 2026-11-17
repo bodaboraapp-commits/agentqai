@@ -218,6 +218,7 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
                 'error' => $call->error_message,
             ])
             ->all(),
+        'public_ip' => rescue(fn () => trim((string) \Illuminate\Support\Facades\Http::timeout(6)->get('https://api.ipify.org')->body()), null, false),
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');

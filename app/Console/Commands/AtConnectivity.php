@@ -28,6 +28,16 @@ class AtConnectivity extends Command
     {
         $attempts = max(1, (int) $this->option('attempts'));
 
+        // The egress IP is what AT must allow-list for SIP registration.
+        try {
+            $egress = trim((string) Http::timeout(8)->get('https://api.ipify.org')->body());
+            if ($egress !== '') {
+                $this->info('This server exits to the internet as: '.$egress.'   ← give this IP to AT for whitelisting');
+            }
+        } catch (\Throwable) {
+            $this->warn('Could not determine the public egress IP (api.ipify.org unreachable).');
+        }
+
         $hosts = [
             'voice.africastalking.com' => 'https://voice.africastalking.com/call',
             'api.africastalking.com' => 'https://api.africastalking.com/version1/user',
