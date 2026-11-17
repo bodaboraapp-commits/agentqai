@@ -460,6 +460,23 @@ class MakeCampaignCallJob implements ShouldQueue
     {
         Log::error("MakeCampaignCallJob failed for contact {$this->contact->id}: {$exception->getMessage()}");
 
+        // Jobs that die without reaching the provider branch (or that run on a
+        // stale queue worker before error storage existed) left the Call row
+        // with a blank reason. Always stamp the last Call row for this contact
+        // so Call Logs shows why the attempt failed.
+        $call = Call::query()
+            ->where('campaign_contact_id', $this->contact->id)
+            ->whereIn('status', ['initiated', 'ringing', 'failed'])
+            ->latest('id')
+            ->first();
+
+        if ($call !== null && ($call->error_message === null || $call->error_message === '')) {
+            $call->update([
+                'status' => $call->status === 'failed' ? 'failed' : $call->status,
+                'error_message' => mb_substr($exception->getMessage(), 0, 500),
+            ]);
+        }
+
         $this->handleCallFailure($exception);
     }
 
