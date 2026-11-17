@@ -203,8 +203,13 @@ class MakeCampaignCallJob implements ShouldQueue
                     'call_attempts' => $this->contact->call_attempts + 1,
                 ]);
 
-                // Mark call as failed
-                $call->update(['status' => 'failed']);
+                // Mark call as failed — keep the reason on the row so Call
+                // Logs/UI show why (network timeout, AT rejection, credits…)
+                // instead of a bare "failed" with no SID.
+                $call->update([
+                    'status' => 'failed',
+                    'error_message' => mb_substr((string) $errorMessage, 0, 500),
+                ]);
 
                 // Don't deduct credits for failed calls
                 return;
