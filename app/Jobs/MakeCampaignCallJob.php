@@ -365,10 +365,20 @@ class MakeCampaignCallJob implements ShouldQueue
             default => 'twiml.',
         };
 
-        // Check if campaign has AI agent assigned
-        if ($this->campaign->ai_agent_id) {
+        // Check if campaign has AI agent assigned. AT has no real-time media
+        // streaming, so there is no at-xml.campaign.ai-agent route: an
+        // AI-agent campaign would throw "Route [at-xml.campaign.ai-agent] not
+        // defined" and never dial. Fall back to the campaign's TTS/voice file
+        // on AT instead.
+        if ($this->campaign->ai_agent_id && $provider !== TelephonyProvider::AFRICASTALKING) {
             // Use AI agent conversation endpoint
             $twimlUrl = route($prefix.'campaign.ai-agent').'?call_id='.$callId;
+        } elseif ($this->campaign->ai_agent_id && $provider === TelephonyProvider::AFRICASTALKING) {
+            Log::warning("Campaign {$this->campaign->id} has an AI agent assigned but AT does not support AI voice agents; falling back to campaign TTS/voice playback");
+
+            $twimlUrl = $this->campaign->type === 'text_to_speech'
+                ? route($prefix.'campaign.tts').'?call_id='.$callId
+                : route($prefix.'campaign.voice').'?call_id='.$callId;
         } elseif ($this->campaign->type === 'text_to_speech') {
             // Use TTS endpoint with call_id as query parameter
             $twimlUrl = route($prefix.'campaign.tts').'?call_id='.$callId;
