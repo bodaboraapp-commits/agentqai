@@ -31,15 +31,15 @@ return [
     'enabled' => (bool) env('AFRICASTALKING_ENABLED', false),
 
     'api' => [
-        // Production Voice/SMS API host. Sandbox uses api.sandbox.…
+        // Production Voice/SMS API host. Sandbox uses api.sandbox.â€¦
         'base_url' => env('AFRICASTALKING_API_URL', 'https://api.africastalking.com'),
         'sandbox_base_url' => env('AFRICASTALKING_SANDBOX_API_URL', 'https://api.sandbox.africastalking.com'),
         'version_segment' => 'version1',
-        'timeout_seconds' => (int) env('AFRICASTALKING_TIMEOUT', 20),
+        'timeout_seconds' => (int) env('AFRICASTALKING_TIMEOUT', 30),
 
         // Voice API is a separate host from the user/SMS API: POST /call on
-        // voice.africastalking.com (voice.sandbox.… in sandbox). The old
-        // api…/version1/voice/call path returns nginx 404.
+        // voice.africastalking.com (voice.sandbox.â€¦ in sandbox). The old
+        // apiâ€¦/version1/voice/call path returns nginx 404.
         'voice_base_url' => env('AFRICASTALKING_VOICE_API_URL', 'https://voice.africastalking.com'),
         'voice_sandbox_base_url' => env('AFRICASTALKING_VOICE_SANDBOX_API_URL', 'https://voice.sandbox.africastalking.com'),
         'voice_call_path' => '/call',
@@ -56,10 +56,10 @@ return [
         | for "rings, answers, no audio, AT drops after ~5s". Switchable per
         | environment to isolate without a deploy:
         |
-        |   full       — callerId + maxDuration=30 + record (current default)
-        |   minimal    — callerId only (AT defaults decide timeouts/recording)
-        |   documented — callerId + sequential + record (AT's own softphone
-        |                sample: <Dial sequential="true" record="true" …>)
+        |   full       â€” callerId + maxDuration=30 + record (current default)
+        |   minimal    â€” callerId only (AT defaults decide timeouts/recording)
+        |   documented â€” callerId + sequential + record (AT's own softphone
+        |                sample: <Dial sequential="true" record="true" â€¦>)
         |
         */
         'bridge_dial_mode' => env('AFRICASTALKING_BRIDGE_DIAL_MODE', 'full'),
@@ -94,12 +94,12 @@ return [
         // when a call row has no explicit from-number.
         'default_number' => env('AFRICASTALKING_VOICE_NUMBER'),
 
-        // AT's <Dial phoneNumbers="…"> is used for both PSTN numbers and this
+        // AT's <Dial phoneNumbers="â€¦"> is used for both PSTN numbers and this
         // installation's registered browser clients. AT does not document a
         // client-dial form, so the prefix is configurable to validate it live:
-        //   ''               → "user_12"
-        //   'client:'        → "client:user_12"
-        //   'AgentQ_AI.'     → "AgentQ_AI.user_12"  (AT's own identity format)
+        //   ''               â†’ "user_12"
+        //   'client:'        â†’ "client:user_12"
+        //   'AgentQ_AI.'     â†’ "AgentQ_AI.user_12"  (AT's own identity format)
         'webrtc_client_prefix' => env('AFRICASTALKING_CLIENT_PREFIX', ''),
 
         /*
@@ -111,11 +111,11 @@ return [
         | the bridge with a 0-second "Aborted"); the documented softphone target
         | is an AT SIP phone. Two strategies:
         |
-        |   client  — try the WebRTC client identity with CLIENT_PREFIX above.
+        |   client  â€” try the WebRTC client identity with CLIENT_PREFIX above.
         |             Experimental; ring the browser if AT accepts the form.
-        |   forward — dial AFRICASTALKING_INBOUND_FORWARD (a real E.164 number,
+        |   forward â€” dial AFRICASTALKING_INBOUND_FORWARD (a real E.164 number,
         |             e.g. your mobile). AT-documented and always rings.
-        |   auto    — forward when a forward number is set, otherwise client.
+        |   auto    â€” forward when a forward number is set, otherwise client.
         |
         */
         'inbound' => [
@@ -124,7 +124,7 @@ return [
         ],
 
         // AT <Say> voice + <GetDigits> defaults. Empty means "let AT use its
-        // own default voice" — Twilio/Polly voice names must never be sent to
+        // own default voice" â€” Twilio/Polly voice names must never be sent to
         // AT, which rejects the whole XML document for an unknown voice.
         'tts' => [
             'default_voice' => env('AFRICASTALKING_TTS_VOICE', ''),
@@ -132,7 +132,7 @@ return [
         ],
 
         // Read by AfricaSTalkingVoiceProvider::estimateCallCost(). This is a
-        // configured estimate, not a live price — AT has no pricing API.
+        // configured estimate, not a live price â€” AT has no pricing API.
         'pricing' => [
             'api_per_minute' => (float) env('AFRICASTALKING_COST_PER_MINUTE', 0.02),
         ],

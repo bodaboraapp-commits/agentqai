@@ -97,7 +97,13 @@ class AfricaSTalkingVoiceProvider implements VoiceProviderInterface
 
         try {
             $response = Http::withHeaders(['apiKey' => $this->apiKey, 'Accept' => 'application/json'])
-                ->timeout((int) config('africastalking.api.timeout_seconds', 20))
+                // voice.africastalking.com intermittently takes >10s to accept a
+                // connection from some networks (campaign calls failed with
+                // cURL error 28 at exactly 10s). Give the connect and the whole
+                // request more room, and retry transient connection failures.
+                ->connectTimeout(10)
+                ->timeout(max(30, (int) config('africastalking.api.timeout_seconds', 30)))
+                ->retry(2, 800, fn ($exception): bool => $exception instanceof \Illuminate\Http\Client\ConnectionException, false)
                 ->asForm()
                 ->post($this->voiceEndpoint(), $payload);
 
