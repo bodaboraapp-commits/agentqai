@@ -78,6 +78,27 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             'validate_timestamps' => (bool) ini_get('opcache.validate_timestamps'),
             'revalidate_freq' => ini_get('opcache.revalidate_freq'),
         ] : ['enabled' => false],
+        'queue' => [
+            'connection' => config('queue.default'),
+            // queue:restart writes this cache timestamp; workers older than it
+            // are expected to exit and be respawned.
+            'restart_signal' => \Illuminate\Support\Facades\Cache::get('illuminate:queue:restart'),
+        ],
+        'latest_failed_calls' => \App\Models\Call::query()
+            ->where('status', 'failed')
+            ->latest('id')
+            ->take(5)
+            ->get(['id', 'created_at', 'campaign_id', 'from_number', 'to_number', 'provider_call_sid', 'error_message'])
+            ->map(fn ($call) => [
+                'id' => $call->id,
+                'created_at' => optional($call->created_at)->toDateTimeString(),
+                'campaign_id' => $call->campaign_id,
+                'from' => $call->from_number,
+                'to' => $call->to_number,
+                'provider_call_sid' => $call->provider_call_sid,
+                'error' => $call->error_message,
+            ])
+            ->all(),
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');
