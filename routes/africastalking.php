@@ -167,6 +167,29 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             'pending_campaign_jobs' => \Illuminate\Support\Facades\DB::table('jobs')->where('queue', 'campaign-calls')->count(),
             'oldest_pending_job' => \Illuminate\Support\Facades\DB::table('jobs')->where('queue', 'campaign-calls')->min('created_at'),
         ],
+        'inbound' => [
+            'mode' => config('africastalking.voice.inbound.mode'),
+            'forward_to' => config('africastalking.voice.inbound.forward_to'),
+            'voicemail_max_seconds' => config('africastalking.voice.inbound.voicemail_max_seconds'),
+            'client_prefix' => config('africastalking.voice.webrtc_client_prefix'),
+            'latest_inbound_calls' => \App\Models\Call::query()
+                ->where('direction', 'inbound')
+                ->latest('id')
+                ->take(5)
+                ->get(['id', 'created_at', 'from_number', 'to_number', 'status', 'provider_call_sid', 'error_message', 'recording_url', 'transcript_status'])
+                ->map(fn ($call) => [
+                    'id' => $call->id,
+                    'created_at' => optional($call->created_at)->toDateTimeString(),
+                    'from' => $call->from_number,
+                    'to' => $call->to_number,
+                    'status' => $call->status,
+                    'provider_call_sid' => $call->provider_call_sid,
+                    'error' => $call->error_message,
+                    'recording' => $call->recording_url !== null,
+                    'transcript_status' => $call->transcript_status,
+                ])
+                ->all(),
+        ],
         'africastalking_config_rows' => \App\Models\TelephonyProviderConfig::query()
             ->whereIn('name', ['africastalking', 'africa_stalking', "africa's talking"])
             ->get()
@@ -219,6 +242,11 @@ Route::prefix('at-xml')->name('at-xml.')->middleware(['throttle:120,1'])->group(
 
         return response($twiml, 200)->header('Content-Type', 'text/xml');
     })->name('dial-complete');
+
+    // AT <Record callbackUrl> target for the inbound voicemail fallback:
+    // store the recording + Deepgram transcript on the Call row.
+    Route::match(['get', 'post'], '/voicemail/{call}', [\App\Http\Controllers\TwimlController::class, 'atVoicemailCallback'])
+        ->name('voicemail');
 });
 
 // AT's per-number "Events" URL (and the callBackUrl of GetDigits/Record XML).

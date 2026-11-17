@@ -112,15 +112,21 @@ return [
         | is an AT SIP phone. Two strategies:
         |
         |   client  â€” try the WebRTC client identity with CLIENT_PREFIX above.
-        |             Experimental; ring the browser if AT accepts the form.
-        |   forward â€” dial AFRICASTALKING_INBOUND_FORWARD (a real E.164 number,
-        |             e.g. your mobile). AT-documented and always rings.
-        |   auto    â€” forward when a forward number is set, otherwise client.
+        |             Experimental; AT answers 0s "Aborted" for client names.
+        |   forward â€” dial AFRICASTALKING_INBOUND_FORWARD: one E.164 number, or
+        |             several comma-separated numbers dialled sequentially
+        |             (a ring group). AT-documented and always rings.
+        |   voicemail â€” record the caller on AT, store the recording and a
+        |             Deepgram transcript on the Call row. Fully automated and
+        |             needs no SIP/WebRTC support.
+        |   auto    â€” forward when a forward number is set, otherwise voicemail.
         |
         */
         'inbound' => [
-            'mode' => env('AFRICASTALKING_INBOUND_MODE', 'client'),
+            'mode' => env('AFRICASTALKING_INBOUND_MODE', 'auto'),
             'forward_to' => env('AFRICASTALKING_INBOUND_FORWARD'),
+            'greeting' => env('AFRICASTALKING_INBOUND_GREETING', 'No one is available to take your call. Please leave a message after the tone.'),
+            'voicemail_max_seconds' => (int) env('AFRICASTALKING_INBOUND_VOICEMAIL_MAX', 45),
         ],
 
         // AT <Say> voice + <GetDigits> defaults. Empty means "let AT use its

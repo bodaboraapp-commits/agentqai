@@ -703,25 +703,37 @@ class TwimlController extends Controller
         //   forward — dial a real E.164 number (AT-documented, guaranteed ring)
         if ($this->telephony->provider() === TelephonyProvider::AFRICASTALKING) {
             $forwardTo = trim((string) config('africastalking.voice.inbound.forward_to'));
-            $mode = (string) config('africastalking.voice.inbound.mode', 'client');
+            $mode = (string) config('africastalking.voice.inbound.mode', 'auto');
+
+            $forwardTargets = array_values(array_filter(array_map('trim', preg_split('/[,;]+/', $forwardTo) ?: [])));
 
             Log::info('Inbound AT call strategy', [
                 'call_id' => $call->id,
                 'mode' => $mode,
                 'forward_to' => $forwardTo !== '' ? $forwardTo : null,
+                'forward_targets' => $forwardTargets,
                 'client_identity' => $clientIdentity,
                 'client_dial_target' => (string) config('africastalking.voice.webrtc_client_prefix', '').$clientIdentity,
             ]);
 
-            if ($forwardTo !== '' && in_array($mode, ['forward', 'auto'], true)) {
+            if ($forwardTargets !== [] && in_array($mode, ['forward', 'auto'], true)) {
+                $dialOptions = ['callerId' => $call->to_number, 'timeout' => 30];
+                if (count($forwardTargets) > 1) {
+                    // AT rings the numbers in order until one answers.
+                    $dialOptions['sequential'] = 'true';
+                }
+
                 return $this->respondWithXml($callXml->buildResponse([
                     $callXml->say('Connecting your call. Please wait.', ['language' => null]),
-                    $callXml->dial($forwardTo, [
-                        'callerId' => $call->to_number,
-                        'timeout' => 30,
-                    ]),
+                    $callXml->dial(implode(',', $forwardTargets), $dialOptions),
                     $callXml->say('The person you are trying to reach is not available. Goodbye!', ['language' => null]),
                 ]));
+            }
+
+            // No forward target (or voicemail mode): record the caller instead
+            // of trying to dial a WebRTC client name, which AT aborts at 0s.
+            if (in_array($mode, ['voicemail', 'auto'], true)) {
+                return $this->respondWithXml($this->atVoicemailXml($call));
             }
         }
 
@@ -780,6 +792,93 @@ class TwimlController extends Controller
         ]);
 
         return $this->respondWithXml($twiml);
+    }
+
+    /**
+     * AT inbound voicemail document: greet, then record the caller and have AT
+     * POST the recording URL to at-xml.voicemail for storage + transcription.
+     */
+    private function atVoicemailXml(Call $call): string
+    {
+        $greeting = (string) config('africastalking.voice.inbound.greeting');
+        if ($greeting === '') {
+            $greeting = 'No one is available to take your call. Please leave a message after the tone.';
+        }
+
+        $maxSeconds = max(5, (int) config('africastalking.voice.inbound.voicemail_max_seconds', 45));
+        $callback = route('at-xml.voicemail', ['call' => $call->id]);
+
+        return '<?xml version="1.0" encoding="UTF-8"?>'
+            .'<Response>'
+            .'<Say>'.e($greeting).'</Say>'
+            .'<Record maxLength="'.$maxSeconds.'" finishOnKey="#" playBeep="true" trimSilence="true" callbackUrl="'.e($callback).'"/>'
+            .'</Response>';
+    }
+
+    /**
+     * AT posts the recording URL here once the caller leaves a message.
+     * Stores the recording + Deepgram transcript on the Call row so inbound
+     * calls are useful even while AT has no SIP/WebRTC inbound path.
+     */
+    public function atVoicemailCallback(Request $request, int $callId): Response
+    {
+        $call = Call::query()->find($callId);
+
+        if ($call === null) {
+            return response($this->xmlOnly('<Response/>'), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        $recordingUrl = (string) ($request->input('recordingUrl') ?? $request->input('RecordingUrl') ?? '');
+        $duration = (int) ($request->input('durationInSeconds') ?? 0);
+
+        Log::info('AT voicemail callback', [
+            'call_id' => $call->id,
+            'recording_url' => $recordingUrl !== '' ? $recordingUrl : null,
+            'duration' => $duration,
+            'is_active' => $request->input('isActive'),
+        ]);
+
+        if ($recordingUrl === '') {
+            $call->forceFill([
+                'status' => 'completed',
+                'ended_at' => now(),
+                'transcript_status' => 'missing',
+                'error_message' => 'AT voicemail callback had no recordingUrl',
+            ])->save();
+
+            return response($this->xmlOnly('<Response><Say>Thank you. Goodbye.</Say></Response>'), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+        }
+
+        $call->forceFill([
+            'recording_url' => $recordingUrl,
+            'duration_seconds' => $duration > 0 ? $duration : $call->duration_seconds,
+            'status' => 'completed',
+            'ended_at' => now(),
+            'transcript_status' => 'pending',
+        ])->save();
+
+        try {
+            $transcription = app(\App\Services\AiAgent\DeepgramService::class)->transcribeFile($recordingUrl);
+
+            if ($transcription !== null && ($transcription['transcript'] ?? '') !== '') {
+                $call->forceFill([
+                    'transcript_text' => $transcription['transcript'],
+                    'transcript_status' => 'completed',
+                ])->save();
+            } else {
+                $call->forceFill(['transcript_status' => 'failed'])->save();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('AT voicemail transcription failed', ['call_id' => $call->id, 'error' => $e->getMessage()]);
+            $call->forceFill(['transcript_status' => 'failed'])->save();
+        }
+
+        return response($this->xmlOnly('<Response><Say>Thank you. Goodbye.</Say></Response>'), 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+    }
+
+    private function xmlOnly(string $body): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8"?>'.$body;
     }
 
     /**
