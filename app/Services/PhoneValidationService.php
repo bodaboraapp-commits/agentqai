@@ -10,8 +10,12 @@ class PhoneValidationService
      * Sanitize and validate phone number to E.164 format
      * This is a simplified version - for production, use libphonenumber-for-php
      */
-    public function sanitize(string $phoneNumber, string $defaultCountryCode = '+1'): array
+    public function sanitize(string $phoneNumber, ?string $defaultCountryCode = null): array
     {
+        // Every caller shares the installation default (AT installs are +254).
+        // A hardcoded +1 turned +254756112633 into +1254756112633, which AT
+        // rejects — the campaign dials showed exactly that.
+        $defaultCountryCode ??= (string) config('telephony.default_country_code', '+1');
         try {
             // Remove all non-digit characters except +
             $cleaned = preg_replace('/[^0-9+]/', '', trim($phoneNumber));
@@ -92,7 +96,7 @@ class PhoneValidationService
     /**
      * Quick validation check
      */
-    public function isValid(string $phoneNumber, string $defaultCountryCode = '+1'): bool
+    public function isValid(string $phoneNumber, ?string $defaultCountryCode = null): bool
     {
         $result = $this->sanitize($phoneNumber, $defaultCountryCode);
         return $result['success'];
