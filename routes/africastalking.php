@@ -80,9 +80,12 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
         ] : ['enabled' => false],
         'queue' => [
             'connection' => config('queue.default'),
+            'cache_store' => config('cache.default'),
             // queue:restart writes this cache timestamp; workers older than it
             // are expected to exit and be respawned.
             'restart_signal' => \Illuminate\Support\Facades\Cache::get('illuminate:queue:restart'),
+            'pending_campaign_jobs' => \Illuminate\Support\Facades\DB::table('jobs')->where('queue', 'campaign-calls')->count(),
+            'oldest_pending_job' => \Illuminate\Support\Facades\DB::table('jobs')->where('queue', 'campaign-calls')->min('created_at'),
         ],
         'africastalking_config_rows' => \App\Models\TelephonyProviderConfig::query()
             ->whereIn('name', ['africastalking', 'africa_stalking', "africa's talking"])
