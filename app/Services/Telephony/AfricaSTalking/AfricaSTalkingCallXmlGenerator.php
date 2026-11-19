@@ -227,14 +227,28 @@ class AfricaSTalkingCallXmlGenerator implements CallXmlInterface
 
     public function dialClient(string $clientIdentity, array $options = []): string
     {
-        // AT has no separate client-dial element in its documented XML, but
-        // WebRTC clients register under a client name (our token identity,
-        // e.g. user_12) and AT routes <Dial phoneNumbers="…"> to registered
-        // endpoints for the number. The prefix is configurable so the exact
-        // form can be adjusted without a code deploy while validating:
-        //   AFRICASTALKING_CLIENT_PREFIX=''          → "user_12"
-        //   AFRICASTALKING_CLIENT_PREFIX='client:'   → "client:user_12"
-        $target = (string) config('africastalking.voice.webrtc_client_prefix', '').$clientIdentity;
+        // AT's documented browser-dial format is "username.clientname" — the
+        // app username, a dot, then the clientName from the capability token
+        // (AT's own session payloads show the caller as "AgentQ_AI.user_1").
+        // Dialling the bare clientName never rings: AT resolves it as a phone
+        // number and aborts the bridge at 0s. Twilio is different — its
+        // <Client> element takes the identity alone, which is why Twilio rang
+        // while AT did not.
+        $prefix = (string) config('africastalking.voice.webrtc_client_prefix', '');
+
+        if ($prefix === '') {
+            $config = \App\Models\TelephonyProviderConfig::query()
+                ->where('name', 'africastalking')
+                ->latest('id')
+                ->first();
+            $appUsername = trim((string) ($config?->credential('username') ?? ''));
+
+            if ($appUsername !== '') {
+                $prefix = $appUsername.'.';
+            }
+        }
+
+        $target = $prefix.$clientIdentity;
 
         return $this->document(function (DOMDocument $dom, DOMElement $response) use ($target, $options): void {
             if (! empty($options['message'])) {
