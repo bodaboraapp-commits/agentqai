@@ -1,5 +1,0 @@
-﻿Dial AT browser clients as username.clientname (Twilio parity)
-
-Why Twilio rang but AT did not: Twilio's first-party registry accepts <Client>user_1</Client>, while AT dials a WebRTC client with the documented username.clientname form (AT session payloads already show AgentQ_AI.user_1). Our AT dialClient used the bare identity (user_1) unless AFRICASTALKING_CLIENT_PREFIX was set, so AT aborted the bridge even when the client was online. dialClient now derives the prefix from the stored AT app username when the env prefix is empty, producing phoneNumbers="AgentQ_AI.user_1" (verified).
-
-The other half is AT's side: the WebRTC gateway currently returns HTTP 500 for /connect, so no client can register; until AT fixes it (or we switch the browser to JsSIP over the working SIP WSS), an inbound client dial cannot ring.
