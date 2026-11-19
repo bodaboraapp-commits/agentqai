@@ -241,6 +241,9 @@ class HandleInertiaRequests extends Middleware
             'provider' => $provider->value,
             'locked' => $locked !== null,
             'hidden' => $locked?->hiddenFeatures() ?? [],
+            // Softphone/dialer phone inputs use this to auto-select the flag and
+            // the local-number country (+254 on an AT installation).
+            'default_country_code' => (string) config('telephony.default_country_code', '+1'),
         ];
     }
 

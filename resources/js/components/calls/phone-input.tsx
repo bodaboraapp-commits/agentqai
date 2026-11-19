@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { usePage } from '@inertiajs/react';
 import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 import * as RPNInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
@@ -33,21 +34,54 @@ export interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInpu
   error?: string;
 }
 
+/** Map an E.164 calling code (+254) to its country (KE) for the flag select. */
+function countryFromDialCode(dialCode?: string): RPNInput.Country | undefined {
+  const digits = (dialCode ?? '').replace(/\D/g, '');
+  if (digits === '') return undefined;
+
+  for (const country of RPNInput.getCountries()) {
+    if (RPNInput.getCountryCallingCode(country) === digits) {
+      return country;
+    }
+  }
+
+  return undefined;
+}
+
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwardRef<
   React.ElementRef<typeof RPNInput.default>,
   PhoneInputProps
->(({ className, onChange, defaultCountry = 'US', label, error, value, ...props }, ref) => {
-  // Force the input value to E.164 with defaultCountry as the assumed country.
-  // This prevents the library from interpreting ambiguous digits
-  // (e.g. "2083421813") as an unexpected country code (like +20 Egypt).
+>(({ className, onChange, defaultCountry, label, error, value, ...props }, ref) => {
+  // Auto-detect the country: explicit prop first, then the installation's
+  // telephony.default_country_code (+254 for an AT install), then US.
+  const page = usePage();
+  const sharedDialCode = (page.props as { telephony?: { default_country_code?: string } })?.telephony?.default_country_code;
+  const resolvedDefault = defaultCountry ?? countryFromDialCode(sharedDialCode) ?? 'US';
+
+  const [country, setCountry] = React.useState<RPNInput.Country>(resolvedDefault);
+
+  // Force the input value to E.164 with the resolved country as the assumed
+  // country, so ambiguous digits ("2083421813") are not read as +20 Egypt.
   const normalizedValue = React.useMemo<PhoneInputValue>(() => {
     if (value === undefined || value === null || value === '') return undefined;
     const str = String(value);
-    // If already E.164, pass through; otherwise normalize using defaultCountry.
+    // If already E.164, pass through; otherwise normalize using the default.
     if (str.startsWith('+')) return str as RPNInput.Value;
-    const normalized = normalizeToE164(str, defaultCountry as 'US' | 'CA' | 'GB' | 'AU');
+    const normalized = normalizeToE164(str, resolvedDefault);
     return (normalized || undefined) as PhoneInputValue;
-  }, [value, defaultCountry]);
+  }, [value, resolvedDefault]);
+
+  // Keep the flag in sync with whatever number is typed/pasted/selected:
+  // "+254…" switches the flag to Kenya even if the default was US.
+  const detectedCountry = React.useMemo<RPNInput.Country | undefined>(() => {
+    if (normalizedValue === undefined) return undefined;
+    const parsed = RPNInput.parsePhoneNumber(String(normalizedValue));
+    return parsed?.country as RPNInput.Country | undefined;
+  }, [normalizedValue]);
+
+  React.useEffect(() => {
+    setCountry(detectedCountry ?? resolvedDefault);
+  }, [detectedCountry, resolvedDefault]);
 
   return (
     <div className="space-y-2">
@@ -58,7 +92,11 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwa
         flagComponent={FlagComponent}
         countrySelectComponent={CountrySelect}
         inputComponent={InputComponent}
-        defaultCountry={defaultCountry}
+        defaultCountry={resolvedDefault}
+        country={country}
+        onCountryChange={(nextCountry) => {
+          if (nextCountry) setCountry(nextCountry);
+        }}
         value={normalizedValue}
         onChange={(v) => onChange?.(v)}
         {...props}

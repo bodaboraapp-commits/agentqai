@@ -119,7 +119,7 @@ export function parsePhoneNumbers(input: string): string[] {
  * Critically, a bare "2083421813" must NEVER be interpreted as Egyptian (+20)
  * — it must be treated as a local number under defaultCountry.
  */
-export function normalizeToE164(phone: string, defaultCountry: 'US' | 'CA' | 'GB' | 'AU' = 'US'): string {
+export function normalizeToE164(phone: string, defaultCountry: string = 'US'): string {
   if (!phone) return '';
 
   const trimmed = phone.trim();
