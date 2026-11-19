@@ -172,8 +172,7 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             'forward_to' => config('africastalking.voice.inbound.forward_to'),
             'voicemail_max_seconds' => config('africastalking.voice.inbound.voicemail_max_seconds'),
             'client_prefix' => config('africastalking.voice.webrtc_client_prefix'),
-            'ivr' => config('africastalking.voice.inbound.ivr'),
-            'latest_inbound_calls' => \App\Models\Call::query()
+            'ivr' => config('africastalking.voice.inbound.ivr'),            'latest_inbound_calls' => \App\Models\Call::query()
                 ->where('direction', 'inbound')
                 ->latest('id')
                 ->take(5)
@@ -220,6 +219,92 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
             ])
             ->all(),
         'public_ip' => rescue(fn () => trim((string) \Illuminate\Support\Facades\Http::timeout(6)->get('https://api.ipify.org')->body()), null, false),
+        'softphone' => (function () {
+            $user = \App\Models\User::query()->whereHas('roles', fn ($q) => $q->where('name', 'admin'))->first()
+                ?? \App\Models\User::query()->first();
+
+            if ($user === null) {
+                return ['error' => 'no users'];
+            }
+
+            $atRow = \App\Models\TelephonyProviderConfig::query()->where('name', 'africastalking')->latest('id')->first();
+            $number = \App\Models\PhoneNumber::query()
+                ->where('user_id', $user->id)
+                ->where('provider', 'africastalking')
+                ->where('status', 'assigned')
+                ->orderByDesc('id')
+                ->value('number')
+                ?? \App\Models\PhoneNumber::query()->where('provider', 'africastalking')->value('number');
+
+            $result = [
+                'locked_provider' => app(\App\Services\Telephony\TelephonyManager::class)->provider()->value,
+                'is_configured' => app(\App\Actions\Telephony\IssueSoftphoneTokenAction::class)->isConfigured(),
+                'user' => $user->email,
+                'phone_number' => $number,
+            ];
+
+            try {
+                $issued = app(\App\Actions\Telephony\IssueSoftphoneTokenAction::class)->execute($user);
+                $result['token_issue'] = [
+                    'ok' => true,
+                    'identity' => $issued['identity'] ?? null,
+                    'provider' => $issued['provider'] ?? null,
+                    'expires_in' => $issued['expires_in'] ?? null,
+                    'token_length' => strlen((string) ($issued['token'] ?? '')),
+                ];
+            } catch (\Throwable $e) {
+                $result['token_issue'] = [
+                    'ok' => false,
+                    'exception' => class_basename($e),
+                    'message' => $e->getMessage(),
+                ];
+            }
+
+            // Direct AT capability-token probe (status + error text only, never the token).
+            try {
+                $username = $atRow?->credential('username');
+                $apiKey = $atRow?->credential('api_key');
+                if ($username && $apiKey && $number) {
+                    $probe = \Illuminate\Support\Facades\Http::withHeaders(['apiKey' => $apiKey, 'Accept' => 'application/json'])
+                        ->timeout(20)
+                        ->asJson()
+                        ->post((string) config('africastalking.api.webrtc_token_url'), [
+                            'username' => $username,
+                            'clientName' => 'user_'.$user->id,
+                            'phoneNumber' => $number,
+                            'incoming' => true,
+                            'outgoing' => true,
+                            'expire' => 300,
+                        ]);
+                    $result['at_token_probe'] = [
+                        'status' => $probe->status(),
+                        'error' => mb_substr((string) ($probe->json('errorMessage') ?? $probe->json('message') ?? $probe->body()), 0, 200),
+                        'has_token' => (bool) $probe->json('token'),
+                    ];
+                } else {
+                    $result['at_token_probe'] = ['error' => 'missing AT credentials or phone number'];
+                }
+            } catch (\Throwable $e) {
+                $result['at_token_probe'] = ['exception' => $e->getMessage()];
+            }
+
+            // WSS handshake to AT's WebRTC gateway from the server.
+            try {
+                $context = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
+                $socket = @stream_socket_client('tls://webrtc.africastalking.com:443', $errno, $errstr, 8, STREAM_CLIENT_CONNECT, $context);
+                if ($socket === false) {
+                    $result['wss_handshake'] = 'connect failed: '.$errstr;
+                } else {
+                    fwrite($socket, "GET /connect HTTP/1.1\r\nHost: webrtc.africastalking.com\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n");
+                    $result['wss_handshake'] = trim((string) fgets($socket));
+                    fclose($socket);
+                }
+            } catch (\Throwable $e) {
+                $result['wss_handshake'] = 'error: '.$e->getMessage();
+            }
+
+            return $result;
+        })(),
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');
