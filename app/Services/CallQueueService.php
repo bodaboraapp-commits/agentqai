@@ -364,6 +364,12 @@ class CallQueueService
      */
     public function getQueueStatus(User $user): array
     {
+        // Stale entries (caller long gone, max wait elapsed, or the Call row
+        // already terminal) must never show as phantom "callers waiting" in
+        // the softphone. cleanExpired() existed but was never called, so the
+        // dialer kept displaying days-old entries; run it on every poll.
+        $this->cleanExpired();
+
         $ownerId = $this->getOwnerId($user);
         $queueName = $this->getQueueName($user);
 
@@ -397,6 +403,23 @@ class CallQueueService
             $owner = User::find($entry->user_id);
             if (!$owner) {
                 $entry->update(['status' => 'timeout']);
+                continue;
+            }
+
+            // The caller's Call row is already finished/cancelled: this queue
+            // entry is phantom regardless of age (a provider can abort a call
+            // without ever sending an abandon callback).
+            $callEnded = \App\Models\Call::query()
+                ->where(function ($query) use ($entry): void {
+                    $query->where('twilio_call_sid', $entry->call_sid)
+                        ->orWhere('provider_call_sid', $entry->call_sid);
+                })
+                ->whereIn('status', ['completed', 'failed', 'canceled', 'cancelled', 'busy', 'no-answer'])
+                ->exists();
+
+            if ($callEnded) {
+                $entry->update(['status' => 'abandoned']);
+
                 continue;
             }
 

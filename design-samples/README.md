@@ -20,7 +20,7 @@ foundation; only the design language changes.
 design-samples/
 ├─ index.html                  ← start here: visual comparison of all five
 ├─ README.md                   ← this file
-├─ render.ps1                  ← re-renders the screenshots with headless Chrome
+├─ render-mobile.mjs           ← optional: re-renders the screenshots with headless Chrome
 ├─ landing/
 │  ├─ 01-console.html          ← dark, product-led, live-call console
 │  ├─ 02-ledger.html           ← editorial, answer-first (recommended for SEO/GEO)
@@ -29,8 +29,8 @@ design-samples/
 │  └─ 05-north.html            ← minimal white, enterprise / procurement-safe
 └─ screenshots/
    ├─ 00-current-live.png      ← the live site today (before)
-   ├─ 01-console-desktop.png   ← and -mobile.png / -full.png for each sample
-   └─ …
+   ├─ 01-console-desktop.png   ← plus -mobile.png / -full.png for each sample
+   └─ …                         (desktop 1440px, mobile 390px @2x)
 ```
 
 **No build step and no server are needed.** Open `index.html` or any file in
@@ -150,7 +150,7 @@ keeps it and extends it.
 | No OG image (`og_image_path` is NULL) | Weak social/answer-engine previews | Add `public/og-image.png` (1200×630) |
 | Typewriter headline + three 3D canvas backgrounds on the landing page | LCP/CLS/TBT risk on mid-range phones | Samples use CSS-only motion, no external requests |
 | Brand colour `#12ab63` exists but the page is monochrome | Brand inconsistency | New samples use it as a deliberate accent |
-| `public/logo.svg` is the Laravel framework mark plus the AgentQ AI wordmark (including Laravel red `#FF2D20`) | Brand credibility problem | Commission/design a real mark; samples use a placeholder phone/agent glyph |
+| `public/logo.svg` is the Laravel framework mark plus the AgentQ AI wordmark (including Laravel red `#FF2D20`) | Brand credibility problem in the repo/bundled asset | Design a real AgentQ mark; the samples use a placeholder phone/agent glyph |
 
 ### Technical choices in the samples (all worth keeping)
 

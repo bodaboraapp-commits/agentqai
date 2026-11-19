@@ -239,8 +239,15 @@ export class AfricaSTalkingDeviceAdapter implements VoiceDeviceAdapter {
     await new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(
         () => {
-          console.error('[AT] client did not become ready within 20s');
-          reject(new Error('Africa\'s Talking softphone did not become ready'));
+          console.error(
+            '[AT] client did not become ready within 20s — AT WebRTC gateway ' +
+            '(wss://webrtc.africastalking.com/connect) is not accepting the client. ' +
+            'Check the deploy-check "softphone" block: a 500 handshake means the AT gateway is down, not your browser.',
+          );
+          reject(new Error(
+            'Africa\'s Talking WebRTC gateway is not accepting the client (wss://webrtc.africastalking.com/connect). ' +
+            'Use a SIP softphone/campaigns while AT fixes the gateway, or retry.',
+          ));
         },
         20000,
       );
