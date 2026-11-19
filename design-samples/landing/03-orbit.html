@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentQ AI — Put an AI voice agent on every call</title>
+<meta name="description" content="AgentQ AI answers, qualifies and books calls in 40+ languages with AI voice agents, then hands off to humans. Pay-as-you-go credits from $10 — no subscription.">
+<meta name="keywords" content="AI voice agent, AI calling platform, AI phone agent, automated calling campaigns, AI appointment setting, two-way SMS">
+<link rel="canonical" href="https://agentqai.cx/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="theme-color" content="#07061a">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AgentQ AI">
+<meta property="og:title" content="AgentQ AI — Put an AI voice agent on every call">
+<meta property="og:description" content="AI voice agents that answer, qualify and book in 40+ languages. Pay only for connected calls.">
+<meta property="og:url" content="https://agentqai.cx/">
+<meta property="og:image" content="https://agentqai.cx/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="text/plain" href="https://agentqai.cx/llms.txt" title="llms.txt">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Organization","@id":"https://agentqai.cx/#organization","name":"AgentQ AI","url":"https://agentqai.cx/","description":"AgentQ AI is a cloud platform for AI voice agents, automated calling campaigns and two-way SMS.","logo":{"@type":"ImageObject","url":"https://agentqai.cx/logo.svg"}},
+{"@type":"WebSite","@id":"https://agentqai.cx/#website","url":"https://agentqai.cx/","name":"AgentQ AI","description":"AI voice agents and automated calling platform for inbound and outbound calls.","inLanguage":"en","publisher":{"@id":"https://agentqai.cx/#organization"}},
+{"@type":"WebPage","@id":"https://agentqai.cx/#webpage","url":"https://agentqai.cx/","name":"AgentQ AI — Put an AI voice agent on every call","description":"AgentQ AI is an AI voice agent platform for inbound and outbound calls in 40+ languages, with pay-as-you-go credits and human handoff.","isPartOf":{"@id":"https://agentqai.cx/#website"},"about":{"@id":"https://agentqai.cx/#organization"},"inLanguage":"en","dateModified":"2026-11-19"},
+{"@type":"SoftwareApplication","@id":"https://agentqai.cx/#software","name":"AgentQ AI","applicationCategory":"BusinessApplication","applicationSubCategory":"AI voice agent platform","operatingSystem":"Web","url":"https://agentqai.cx/","description":"Cloud platform for AI voice agents, automated calling campaigns, two-way SMS and follow-up sequences.","featureList":["AI voice agents for inbound and outbound calls","Automated calling campaigns with TTS or recorded audio","Answering machine detection and DTMF keypad input","Two-way SMS with AI replies","Multi-step follow-up sequences","Live call monitoring and transcripts","Knowledge base for domain-specific answers","Human call transfer","Real-time analytics and per-call cost tracking","40+ voice languages and a 10-language interface","REST API and CRM webhooks"],"offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"10","highPrice":"80","offerCount":"3","offers":[{"@type":"Offer","name":"Starter — 100 credits","price":"10","priceCurrency":"USD"},{"@type":"Offer","name":"Growth — 500 credits","price":"45","priceCurrency":"USD"},{"@type":"Offer","name":"Scale — 1,000 credits","price":"80","priceCurrency":"USD"}]}},
+{"@type":"HowTo","@id":"https://agentqai.cx/#howto","name":"How to launch an AI calling campaign with AgentQ AI","totalTime":"PT1H","step":[{"@type":"HowToStep","position":1,"name":"Connect a phone number","text":"Buy or bring numbers from Twilio, Plivo or Africa's Talking, or connect your own SIP trunk."},{"@type":"HowToStep","position":2,"name":"Build the AI agent","text":"Choose a voice and model, upload a knowledge base, set the call goal and define when to transfer to a human."},{"@type":"HowToStep","position":3,"name":"Launch and measure","text":"Run campaigns, SMS and follow-up sequences, watch live transcripts and optimize from per-call analytics."}]},
+{"@type":"FAQPage","@id":"https://agentqai.cx/#faq","mainEntity":[
+{"@type":"Question","name":"What is AgentQ AI?","acceptedAnswer":{"@type":"Answer","text":"AgentQ AI is a cloud platform for AI voice agents, automated calling campaigns and two-way SMS. Its agents hold real conversations in 40+ languages, qualify leads, book appointments and transfer to people. Billing is pay-as-you-go on prepaid credits with no subscription, and credits never expire."}},
+{"@type":"Question","name":"How do AI voice agents work?","acceptedAnswer":{"@type":"Answer","text":"Each call runs a real-time loop: speech-to-text transcribes the caller, a language model decides the reply using your script and knowledge base, and text-to-speech answers in a natural voice. Responses typically arrive in under a second."}},
+{"@type":"Question","name":"How much does a call cost?","acceptedAnswer":{"@type":"Answer","text":"One credit covers one connected call. Credits cost $0.10 each on the 100-credit pack, $0.09 on the 500-credit pack and $0.08 on the 1,000-credit pack. Failed, busy or unanswered calls are free."}},
+{"@type":"Question","name":"Do credits expire?","acceptedAnswer":{"@type":"Answer","text":"No. AgentQ AI credits never expire. Buy them once and use them for campaigns, inbound agents, SMS or sequences whenever you need them."}},
+{"@type":"Question","name":"Which languages are supported?","acceptedAnswer":{"@type":"Answer","text":"Voice agents support 40+ languages, including English, Spanish, French, German, Portuguese, Arabic, Hindi, Swahili, Chinese and Japanese. The account interface is available in 10 languages."}},
+{"@type":"Question","name":"Can the AI transfer a call to a human?","acceptedAnswer":{"@type":"Answer","text":"Yes. Agents transfer on rules you set — a request for a human, a specific intent, a sentiment threshold or a high-value lead. The person receives the live transcript and call context."}},
+{"@type":"Question","name":"Do I need my own Twilio or Plivo account?","acceptedAnswer":{"@type":"Answer","text":"No. AgentQ AI supports Twilio, Plivo and Africa's Talking out of the box, including number purchase. Existing carrier contracts can be kept by bringing your own numbers or connecting a SIP trunk."}},
+{"@type":"Question","name":"How long does setup take?","acceptedAnswer":{"@type":"Answer","text":"Most teams connect a number and make their first AI call in under an hour. Build the agent from a template, upload your knowledge base, choose a voice, then launch a campaign or point an inbound number at the agent."}}
+]},
+{"@type":"BreadcrumbList","@id":"https://agentqai.cx/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://agentqai.cx/"}]}
+]}
+</script>
+
+<style>
+:root{
+  --bg:#07061a; --bg-2:#0a0824; --panel:rgba(255,255,255,.045); --panel-2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.18);
+  --text:#f2f1ff; --muted:#a8a6c8; --dim:#7c7aa0;
+  --violet:#8b5cf6; --violet-2:#c084fc; --teal:#22d3ee; --green:#12ab63; --green-2:#34e08f;
+  --amber:#fbbf24; --radius:20px; --max:1180px;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3,p,ul{margin:0}
+ul{padding:0;list-style:none}
+img,svg{display:block;max-width:100%}
+.container{width:min(var(--max),calc(100% - 40px));margin-inline:auto}
+.skip{position:absolute;left:-9999px;background:#fff;color:#07061a;padding:12px 18px;z-index:100}
+.skip:focus{left:12px;top:12px}
+:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:6px}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* backdrop */
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.aurora::before,.aurora::after{content:"";position:absolute;width:70vw;height:70vw;border-radius:50%;filter:blur(90px);opacity:.34}
+.aurora::before{top:-30vw;left:-10vw;background:radial-gradient(circle,#5b21b6,transparent 62%)}
+.aurora::after{top:-10vw;right:-24vw;background:radial-gradient(circle,#0e7490,transparent 64%)}
+.aurora i{position:absolute;top:34vh;left:34vw;width:44vw;height:44vw;border-radius:50%;background:radial-gradient(circle,rgba(18,171,99,.32),transparent 62%);filter:blur(90px);opacity:.5}
+.page{position:relative;z-index:1}
+
+/* header */
+.site-header{position:sticky;top:0;z-index:60;background:rgba(7,6,26,.72);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:26px;height:72px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:18px;letter-spacing:-.02em}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:grid;place-items:center;box-shadow:0 6px 22px rgba(139,92,246,.4)}
+.brand-mark svg{width:19px;height:19px;color:#fff}
+.nav-links{display:flex;gap:24px;margin-left:14px}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;text-decoration:none;border:1px solid transparent;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s;white-space:nowrap}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:linear-gradient(100deg,#12ab63,#34e08f);color:#04140b;box-shadow:0 10px 30px -8px rgba(52,224,143,.55)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -10px rgba(52,224,143,.65)}
+.btn-ghost{background:rgba(255,255,255,.04);border-color:var(--line-2);color:var(--text)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
+.btn-lg{padding:15px 24px;font-size:15px;border-radius:14px}
+.nav-toggle{display:none;width:40px;height:40px;border:1px solid var(--line-2);background:transparent;color:var(--text);border-radius:10px;cursor:pointer}
+.nav-toggle svg{width:20px;height:20px;margin:auto}
+
+/* hero */
+.hero{padding:84px 0 0;text-align:center;position:relative}
+.pill{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line-2);background:rgba(255,255,255,.05);border-radius:999px;padding:7px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#cfcdf0;backdrop-filter:blur(8px)}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 4px rgba(52,224,143,.16);animation:pulse 2.4s infinite}
+h1{font-size:clamp(2.8rem,6.2vw,5rem);line-height:1.0;letter-spacing:-.05em;font-weight:800;margin:24px auto 0;max-width:16ch}
+.grad{background:linear-gradient(100deg,#c084fc 0%,#8b5cf6 35%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-green{background:linear-gradient(100deg,#34e08f,#12ab63 60%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{color:var(--muted);font-size:clamp(1.02rem,1.6vw,1.2rem);max-width:38rem;margin:22px auto 0}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
+.hero-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;margin-top:22px;color:var(--dim);font-size:12.5px}
+.hero-trust span{display:inline-flex;align-items:center;gap:6px}
+.hero-trust svg{width:13px;height:13px;color:var(--green-2)}
+
+.answer-bar{max-width:900px;margin:36px auto 0;text-align:left;display:flex;gap:16px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:18px 22px;backdrop-filter:blur(10px)}
+.answer-bar .ico{flex:none;width:34px;height:34px;border-radius:9px;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.35);display:grid;place-items:center;color:#d8b4fe}
+.answer-bar .ico svg{width:17px;height:17px}
+.answer-bar small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#c4b5fd;margin-bottom:3px}
+.answer-bar p{color:#cfcdee;font-size:14px;line-height:1.6}
+.answer-bar a{color:var(--teal);font-weight:600;text-decoration:none;font-size:12.5px;white-space:nowrap}
+.answer-bar a:hover{text-decoration:underline}
+
+/* app preview */
+.preview{position:relative;margin:54px auto 0;max-width:1080px;border-radius:22px;padding:1px;background:linear-gradient(150deg,rgba(139,92,246,.55),rgba(34,211,238,.25) 40%,rgba(18,171,99,.4));box-shadow:0 60px 140px -40px rgba(0,0,0,.9),0 0 90px rgba(139,92,246,.22)}
+.preview-inner{background:#0a0822;border-radius:21px;overflow:hidden}
+.winbar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.winbar i{width:9px;height:9px;border-radius:50%;background:#37345c;display:block}
+.winbar span{margin-left:8px;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.06em}
+.winbar .live{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:#7ef0cd}
+.winbar .live i{width:6px;height:6px;background:var(--green-2);border-radius:50%;animation:pulse 1.6s infinite}
+.dash{display:grid;grid-template-columns:186px 1fr;text-align:left}
+.side{border-right:1px solid var(--line);padding:16px 12px;background:rgba(255,255,255,.018)}
+.side .s-brand{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;padding:4px 8px 14px;color:#e6e4ff}
+.side .s-brand .m{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:grid;place-items:center;color:#fff}
+.side .s-brand .m svg{width:12px;height:12px}
+.side a{display:flex;align-items:center;gap:9px;color:var(--dim);text-decoration:none;font-size:12px;padding:8px 9px;border-radius:8px}
+.side a.on{background:rgba(139,92,246,.14);color:#e6e4ff;border:1px solid rgba(139,92,246,.25)}
+.side a svg{width:14px;height:14px}
+.side .sep{height:1px;background:var(--line);margin:12px 6px}
+.main{padding:18px}
+.main-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.main-head h2{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.main-head .chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:#b7f7d9;background:rgba(18,171,99,.12);border:1px solid rgba(18,171,99,.3);border-radius:6px;padding:4px 8px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.metric{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.metric small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.metric b{font-size:18px;letter-spacing:-.02em}
+.metric b i{font-style:normal;font-size:10px;color:var(--green-2)}
+.dash-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:10px}
+.callcard{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:14px}
+.callcard .cc-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.avatar{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#123c2c,#0b241b);border:1px solid rgba(52,224,143,.3);display:grid;place-items:center;color:#7ef0cd;flex:none}
+.avatar svg{width:16px;height:16px}
+.callcard .cc-head b{display:block;font-size:12px}
+.callcard .cc-head small{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.08em}
+.callcard .timer{margin-left:auto;font-family:var(--mono);font-size:12px;color:#b7f7d9}
+.wave{display:flex;align-items:center;justify-content:space-between;gap:2px;height:34px;margin-bottom:10px}
+.wave i{flex:1;max-width:3px;min-width:2px;border-radius:2px;background:linear-gradient(180deg,#34e08f,#12ab63);height:30%;opacity:.9}
+.wave i:nth-child(2n){height:52%}.wave i:nth-child(3n){height:78%}.wave i:nth-child(4n){height:40%}.wave i:nth-child(5n){height:96%}
+.wave i:nth-child(1){animation-delay:.02s}.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.18s}.wave i:nth-child(4){animation-delay:.06s}.wave i:nth-child(5){animation-delay:.24s}.wave i:nth-child(6){animation-delay:.14s}.wave i:nth-child(7){animation-delay:.3s}.wave i:nth-child(8){animation-delay:.08s}.wave i:nth-child(9){animation-delay:.22s}.wave i:nth-child(10){animation-delay:.16s}.wave i:nth-child(11){animation-delay:.04s}.wave i:nth-child(12){animation-delay:.26s}
+.bubbles{display:grid;gap:6px}
+.bubbles p{font-size:11px;line-height:1.45;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:#d5d3f2}
+.bubbles p.ai{background:rgba(18,171,99,.09);border-color:rgba(18,171,99,.25)}
+.bubbles p.user{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.25);margin-left:14%}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chips span{font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:#b7f7d9;border:1px solid rgba(18,171,99,.28);border-radius:5px;padding:3px 6px}
+.sidecard{display:grid;gap:10px;align-content:start}
+.sidecard .mini{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.sidecard .mini small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.sidecard .mini b{font-size:12px;display:block}
+.sidecard .mini .bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden}
+.sidecard .mini .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8b5cf6,#22d3ee)}
+.sidecard .mini .bar.g i{background:linear-gradient(90deg,#12ab63,#34e08f)}
+
+/* proof */
+.proof{padding:54px 0 0}
+.proof p{text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:20px}
+.industries{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 12px}
+.industries span{font-size:12.5px;color:#b6b4d6;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:rgba(255,255,255,.03)}
+
+/* sections */
+.section{padding:92px 0}
+.section-tight{padding:64px 0}
+.center{text-align:center;max-width:720px;margin:0 auto 46px}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#c4b5fd;margin-bottom:14px}
+.kicker::before{content:"";width:18px;height:1px;background:linear-gradient(90deg,#8b5cf6,#22d3ee)}
+.center h2,.section-head h2{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.06;letter-spacing:-.045em;font-weight:800}
+.center p,.section-head p{color:var(--muted);font-size:1.04rem;margin-top:14px}
+.section-head{max-width:700px;margin-bottom:44px}
+
+/* features */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.fcard{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:24px;transition:transform .25s,border-color .25s,box-shadow .25s}
+.fcard:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.4);box-shadow:0 24px 60px -28px rgba(139,92,246,.5)}
+.fcard .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;margin-bottom:16px;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.3);color:#d8b4fe}
+.fcard:nth-child(2n) .ico{background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.28);color:#a5f3fc}
+.fcard:nth-child(3n) .ico{background:rgba(18,171,99,.12);border-color:rgba(18,171,99,.3);color:#86efac}
+.fcard .ico svg{width:20px;height:20px}
+.fcard h3{font-size:17px;font-weight:700;letter-spacing:-.015em}
+.fcard p{color:var(--muted);font-size:13.8px;margin-top:8px;line-height:1.6}
+
+/* tabs */
+.tabs-shell{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:22px;padding:10px;backdrop-filter:blur(10px)}
+.tablist{display:flex;gap:6px;flex-wrap:wrap;padding:4px}
+.tablist button{flex:1;min-width:140px;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);font:600 13.5px/1 var(--font);padding:12px 14px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+.tablist button svg{width:16px;height:16px}
+.tablist button[aria-selected="true"]{background:linear-gradient(180deg,rgba(139,92,246,.24),rgba(139,92,246,.1));color:#fff;border-color:rgba(139,92,246,.42);box-shadow:0 10px 30px -14px rgba(139,92,246,.6)}
+.tabpanel{display:grid;grid-template-columns:1fr .9fr;gap:26px;padding:26px;align-items:center}
+.tabpanel[hidden]{display:none}
+.tabpanel h3{font-size:23px;letter-spacing:-.03em;font-weight:800;line-height:1.15}
+.tabpanel > div > p{color:var(--muted);font-size:14px;margin-top:10px;max-width:36rem}
+.tabpanel ul{margin-top:18px;display:grid;gap:9px}
+.tabpanel li{display:flex;gap:9px;font-size:13.5px;color:#cfcdee;align-items:flex-start}
+.tabpanel li svg{width:15px;height:15px;color:var(--green-2);flex:none;margin-top:2px}
+.mock{background:#0b0924;border:1px solid var(--line-2);border-radius:16px;padding:16px;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)}
+.mock .m-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.mock .m-head b{font-size:12px}
+.mock .m-head small{font-family:var(--mono);font-size:8px;color:var(--dim);letter-spacing:.1em;display:block}
+.mock .m-head .st{margin-left:auto;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:#7ef0cd;border:1px solid rgba(18,171,99,.3);background:rgba(18,171,99,.1);border-radius:5px;padding:3px 6px}
+.mock .line{display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+.mock .line:last-child{border-bottom:0}
+.mock .line span{color:var(--dim)}
+.mock .line b{font-weight:600;color:#e8e6ff}
+.mock .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.07);margin:10px 0 4px;overflow:hidden}
+.mock .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#12ab63,#34e08f)}
+.mock .chat p{font-size:11px;line-height:1.45;padding:7px 9px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line)}
+.mock .chat p.out{background:rgba(139,92,246,.14);border-color:rgba(139,92,246,.3);margin-left:16%}
+.mock .chat p.in{background:rgba(18,171,99,.1);border-color:rgba(18,171,99,.26)}
+.mock .m-note{font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;color:var(--dim);margin-top:10px}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:1fr .95fr;gap:40px;align-items:center}
+.calc h2{font-size:clamp(2rem,3.6vw,2.9rem);line-height:1.07;letter-spacing:-.045em;font-weight:800}
+.calc p.lead{color:var(--muted);margin-top:14px;font-size:15px}
+.calc .pts{margin-top:24px;display:grid;gap:10px}
+.calc .pts li{display:flex;gap:9px;font-size:13.5px;color:#cfcdee}
+.calc .pts svg{width:15px;height:15px;color:var(--green-2);flex:none;margin-top:2px}
+.calc-card{background:linear-gradient(180deg,rgba(139,92,246,.14),rgba(255,255,255,.03));border:1px solid rgba(139,92,246,.35);border-radius:20px;padding:26px;box-shadow:0 40px 100px -40px rgba(139,92,246,.5)}
+.calc-card label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#d5d3f2;margin-bottom:10px}
+.calc-card label output{font-family:var(--mono);font-size:15px;color:#fff}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:linear-gradient(90deg,#8b5cf6,#22d3ee);outline:none;margin:6px 0 22px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #8b5cf6;box-shadow:0 4px 16px rgba(139,92,246,.6);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #8b5cf6;cursor:pointer}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--dim);margin-top:-16px;margin-bottom:20px}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.out{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:13px}
+.out small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.out b{font-size:21px;letter-spacing:-.02em;font-weight:800}
+.out b em{font-style:normal;font-size:11px;color:var(--muted);font-weight:500}
+.calc-card .save{font-size:11.5px;color:#86efac;font-family:var(--mono);letter-spacing:.03em;margin-bottom:14px;min-height:16px}
+.calc-card .btn{width:100%}
+.calc-note{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:var(--dim);margin-top:11px;text-align:center;line-height:1.6}
+
+/* pricing */
+.pricing{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.plan{position:relative;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:24px;transition:transform .25s,border-color .25s}
+.plan:hover{transform:translateY(-3px);border-color:var(--line-2)}
+.plan.pop{border-color:rgba(52,224,143,.5);background:radial-gradient(120% 90% at 50% 0%,rgba(18,171,99,.18),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));box-shadow:0 30px 80px -40px rgba(52,224,143,.55)}
+.plan .tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(100deg,#12ab63,#34e08f);color:#04140b;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.plan h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.plan .amt{display:flex;align-items:baseline;gap:7px;margin:13px 0 2px}
+.plan .amt b{font-size:38px;font-weight:800;letter-spacing:-.045em;line-height:1}
+.plan .amt span{font-size:12px;color:var(--muted)}
+.plan .cred{font-size:12.5px;color:var(--muted);padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.plan ul{display:grid;gap:8px;font-size:12.5px;color:#cfcdee;margin-bottom:20px}
+.plan li{display:flex;gap:7px;align-items:flex-start}
+.plan li svg{width:13px;height:13px;color:var(--green-2);flex:none;margin-top:2px}
+.plan .btn{margin-top:auto;width:100%;font-size:13px;padding:11px 14px}
+.price-note{text-align:center;color:var(--dim);font-size:12px;margin-top:20px;display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center}
+.price-note span{display:inline-flex;align-items:center;gap:6px}
+.price-note svg{width:12px;height:12px;color:var(--green-2)}
+
+/* faq */
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;align-items:start}
+details{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:13px;overflow:hidden;transition:border-color .2s}
+details[open]{border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.07)}
+summary{cursor:pointer;list-style:none;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:16px 18px;font-size:14px;font-weight:600;line-height:1.45}
+summary::-webkit-details-marker{display:none}
+summary svg{width:15px;height:15px;color:#c4b5fd;flex:none;margin-top:2px;transition:transform .2s}
+details[open] summary svg{transform:rotate(45deg)}
+details .a{padding:0 18px 16px 44px;color:var(--muted);font-size:13px;line-height:1.65}
+details .a a{color:var(--teal)}
+
+/* cta */
+.cta{position:relative;margin:0 auto;max-width:1180px;border-radius:26px;padding:56px 44px;overflow:hidden;background:linear-gradient(120deg,rgba(139,92,246,.28),rgba(18,171,99,.2) 55%,rgba(34,211,238,.24));border:1px solid rgba(255,255,255,.18);text-align:center}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.16),transparent 60%);pointer-events:none}
+.cta h2{position:relative;font-size:clamp(2rem,4vw,3.1rem);line-height:1.04;letter-spacing:-.05em;font-weight:800;max-width:18ch;margin:0 auto}
+.cta p{position:relative;color:#d9d7f5;margin:14px auto 26px;max-width:34rem;font-size:14.5px}
+.cta .actions{position:relative;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* footer */
+.footer{border-top:1px solid var(--line);margin-top:96px;padding:48px 0 26px;background:rgba(0,0,0,.25)}
+.footer-grid{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:30px}
+.footer .brand{margin-bottom:12px}
+.footer p{color:var(--dim);font-size:13px;max-width:280px}
+.footer h3{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:13px;font-weight:600}
+.footer ul{display:grid;gap:8px}
+.footer a{color:#b6b4d6;text-decoration:none;font-size:13px}
+.footer a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.footer-bottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px}
+.footer-bottom .mono{font-family:var(--mono);font-size:9px;letter-spacing:.1em}
+
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 3px rgba(52,224,143,.2)}50%{opacity:.55;box-shadow:0 0 0 8px rgba(52,224,143,0)}}
+@keyframes eq{from{transform:scaleY(.35)}to{transform:scaleY(1)}}
+
+@media (max-width:1024px){
+  .nav-links{display:none}
+  .nav-links.open{display:flex;position:absolute;top:72px;left:16px;right:16px;flex-direction:column;background:#0b0924;border:1px solid var(--line-2);border-radius:16px;padding:18px;gap:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+  .dash{grid-template-columns:1fr}
+  .side{display:none}
+  .tabpanel{grid-template-columns:1fr}
+  .calc{grid-template-columns:1fr;gap:30px}
+  .features{grid-template-columns:1fr 1fr}
+  .pricing{grid-template-columns:1fr 1fr}
+  .faq{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .nav-toggle{display:block}
+  .nav-cta .btn-ghost{display:none}
+}
+@media (max-width:760px){
+  .container{width:calc(100% - 32px)}
+  .hero{padding-top:54px}
+  .hero-actions .btn{width:100%}
+  .answer-bar{flex-direction:column;gap:10px}
+  .dash-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .features,.pricing{grid-template-columns:1fr}
+  .tablist{flex-direction:column}
+  .tabpanel{padding:18px}
+  .section{padding:64px 0}
+  .cta{padding:40px 22px;border-radius:20px}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .out-grid{grid-template-columns:1fr}
+  .nav-cta .btn-primary{padding:10px 13px;font-size:12.5px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg style="display:none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 5.7L20 10l-5.7 1.9L12 18l-1.9-5.7L4 10l5.7-1.9L12 3z"/></symbol>
+  <symbol id="i-handoff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7l10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></symbol>
+</svg>
+
+<div class="aurora" aria-hidden="true"><i></i></div>
+
+<div class="page">
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand" href="/" aria-label="AgentQ AI home">
+      <span class="brand-mark"><svg aria-hidden="true"><use href="#i-phone"/></svg></span>
+      <span>AgentQ AI</span>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="Main">
+      <a href="#platform">Platform</a>
+      <a href="#how">How it works</a>
+      <a href="#calculator">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="/login">Sign in</a>
+      <a class="btn btn-primary" href="#calculator">Start with $10 <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><svg aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <span class="pill"><span class="dot"></span> AI voice agents · pay as you go · no subscription</span>
+      <h1>Put an <span class="grad">AI agent</span> on every call.</h1>
+      <p class="hero-sub">AgentQ AI answers, qualifies and books in 40+ languages — then hands your best leads to a human. You pay only for connected calls.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#calculator">Start with 100 credits — $10 <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
+      </div>
+      <p class="hero-trust">
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> No subscription</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> Failed calls free</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> Credits never expire</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> Live in minutes</span>
+      </p>
+
+      <div class="answer-bar">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-spark"/></svg></span>
+        <div>
+          <small>What is AgentQ AI?</small>
+          <p>AgentQ AI is a cloud platform for AI voice agents, automated calling campaigns and two-way SMS. Its agents hold real conversations in 40+ languages, qualify leads, book appointments and transfer to people — billed pay-as-you-go with credits that never expire.</p>
+        </div>
+        <a href="#faq">FAQ →</a>
+      </div>
+
+      <!-- app preview -->
+      <div class="preview" role="img" aria-label="AgentQ AI dashboard with a live AI call, transcript and outcome metrics.">
+        <div class="preview-inner">
+          <div class="winbar"><i></i><i></i><i></i><span>app.agentqai.cx / agents / live</span><span class="live"><i></i> LIVE</span></div>
+          <div class="dash">
+            <aside class="side" aria-hidden="true">
+              <div class="s-brand"><span class="m"><svg><use href="#i-phone"/></svg></span> AgentQ AI</div>
+              <a class="on" href="#"><svg><use href="#i-chart"/></svg> Dashboard</a>
+              <a href="#"><svg><use href="#i-bot"/></svg> AI agents</a>
+              <a href="#"><svg><use href="#i-phone"/></svg> Campaigns</a>
+              <a href="#"><svg><use href="#i-chat"/></svg> SMS</a>
+              <a href="#"><svg><use href="#i-calendar"/></svg> Sequences</a>
+              <a href="#"><svg><use href="#i-users"/></svg> Contacts</a>
+              <div class="sep"></div>
+              <a href="#"><svg><use href="#i-coins"/></svg> Credits</a>
+              <a href="#"><svg><use href="#i-shield"/></svg> Security</a>
+            </aside>
+            <div class="main">
+              <div class="main-head">
+                <h2>Live call — Q Agent · Sales Qualifier</h2>
+                <span class="chip">CAMPAIGN: DEMO-REQUEST</span>
+              </div>
+              <div class="metrics">
+                <div class="metric"><small>Connected today</small><b>128 <i>+12%</i></b></div>
+                <div class="metric"><small>Avg. response</small><b>0.8s</b></div>
+                <div class="metric"><small>Qualified</small><b>34 <i>27%</i></b></div>
+              </div>
+              <div class="dash-grid">
+                <div class="callcard">
+                  <div class="cc-head">
+                    <span class="avatar"><svg aria-hidden="true"><use href="#i-bot"/></svg></span>
+                    <div><b>Voice agent</b><small>INBOUND · +254 7XX XXX XXX</small></div>
+                    <span class="timer">00:42</span>
+                  </div>
+                  <div class="wave" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+                  <div class="bubbles">
+                    <p class="ai">Hi, this is Ava from AgentQ — you asked for a demo. Is now a good time?</p>
+                    <p class="user">I'm driving. Can you call back later?</p>
+                    <p class="ai">Of course — 5:30 PM works? I'll text the confirmation.</p>
+                  </div>
+                  <div class="chips"><span>CALLBACK BOOKED</span><span>SMS QUEUED</span><span>CRM UPDATED</span></div>
+                </div>
+                <div class="sidecard" aria-hidden="true">
+                  <div class="mini"><small>Knowledge base</small><b>42 documents</b><div class="bar"><i style="width:86%"></i></div></div>
+                  <div class="mini"><small>Human handoff rate</small><b>18%</b><div class="bar g"><i style="width:18%"></i></div></div>
+                  <div class="mini"><small>Cost this call</small><b>1 credit · $0.09</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDUSTRIES -->
+  <div class="proof">
+    <div class="container">
+      <p>Built for teams that live on the phone</p>
+      <div class="industries" aria-label="Industries served">
+        <span>Sales &amp; lead gen</span><span>Customer support</span><span>Clinics &amp; health</span><span>Real estate</span><span>Logistics</span><span>Financial services</span><span>Education</span><span>E-commerce</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" id="platform">
+    <div class="container">
+      <div class="center">
+        <span class="kicker">The platform</span>
+        <h2>Everything the conversation needs.</h2>
+        <p>One platform for the call, the reasoning, the follow-up and the proof it worked.</p>
+      </div>
+      <div class="features">
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-bot"/></svg></div><h3>AI voice agents</h3><p>Real-time conversations with memory, interruptions and a knowledge base — not a script tree.</p></article>
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-phone"/></svg></div><h3>Calling campaigns</h3><p>Bulk outbound calling with TTS or recordings, answering-machine detection and DTMF input.</p></article>
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-chat"/></svg></div><h3>Two-way SMS</h3><p>Send, receive and let AI reply. Templates and conversation history included.</p></article>
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-calendar"/></svg></div><h3>Follow-up sequences</h3><p>Multi-step voice and SMS sequences with A/B variants and behaviour-based timing.</p></article>
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-handoff"/></svg></div><h3>Human handoff</h3><p>Transfer on intent, sentiment or lead value — with the live transcript attached.</p></article>
+        <article class="fcard"><div class="ico"><svg aria-hidden="true"><use href="#i-chart"/></svg></div><h3>Analytics that matter</h3><p>Outcomes, sentiment and cost per call, not vanity dashboards.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section class="section section-tight" id="how">
+    <div class="container">
+      <div class="section-head">
+        <span class="kicker">How teams use it</span>
+        <h2>Start where the phone hurts most.</h2>
+        <p>Most teams launch one motion first, then add the others once the calls are flowing.</p>
+      </div>
+      <div class="tabs-shell">
+        <div class="tablist" role="tablist" aria-label="AgentQ AI use cases">
+          <button role="tab" id="tab-in" aria-selected="true" aria-controls="panel-in" tabindex="0"><svg aria-hidden="true"><use href="#i-phone"/></svg> Inbound</button>
+          <button role="tab" id="tab-out" aria-selected="false" aria-controls="panel-out" tabindex="-1"><svg aria-hidden="true"><use href="#i-send"/></svg> Outbound</button>
+          <button role="tab" id="tab-sms" aria-selected="false" aria-controls="panel-sms" tabindex="-1"><svg aria-hidden="true"><use href="#i-chat"/></svg> SMS &amp; sequences</button>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="panel-in" aria-labelledby="tab-in">
+          <div>
+            <h3>Answer every call, even at 2am.</h3>
+            <p>An inbound agent greets, identifies the reason for the call and resolves what it can from your knowledge base. The rest go to a person with the transcript.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> 24/7 coverage without a night shift</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Answers grounded in your documents</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Live transfer on request or intent</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Bookings, confirmations and callbacks</li>
+            </ul>
+          </div>
+          <div class="mock" aria-hidden="true">
+            <div class="m-head"><span class="avatar"><svg><use href="#i-phone"/></svg></span><div><b>Inbound · +254 7XX XXX XXX</b><small>BEFORE HOURS</small></div><span class="st">ANSWERED</span></div>
+            <div class="line"><span>Caller</span><b>“What time do you close?”</b></div>
+            <div class="line"><span>Agent</span><b>“Six, Monday to Friday.”</b></div>
+            <div class="line"><span>Caller</span><b>“Can I book Friday?”</b></div>
+            <div class="line"><span>Outcome</span><b>Appointment booked</b></div>
+          </div>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="panel-out" aria-labelledby="tab-out" hidden>
+          <div>
+            <h3>Work the list without dialling.</h3>
+            <p>Outbound campaigns call with a clear goal, detect voicemail, respect time zones and keypad input, and write every outcome back.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> TTS voices or your own recordings</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Answering-machine detection</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> DTMF keypad responses</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Timezone-aware scheduling</li>
+            </ul>
+          </div>
+          <div class="mock" aria-hidden="true">
+            <div class="m-head"><span class="avatar"><svg><use href="#i-send"/></svg></span><div><b>Campaign · Q4 reactivation</b><small>OUTBOUND</small></div><span class="st">RUNNING</span></div>
+            <div class="line"><span>Contacted</span><b>1,240</b></div>
+            <div class="line"><span>Connected</span><b>612</b></div>
+            <div class="line"><span>Qualified</span><b>148</b></div>
+            <div class="bar"><i style="width:61%"></i></div>
+            <div class="m-note">61% CONNECT · 24% QUALIFIED · 0.9S AVG RESPONSE</div>
+          </div>
+        </div>
+
+        <div class="tabpanel" role="tabpanel" id="panel-sms" aria-labelledby="tab-sms" hidden>
+          <div>
+            <h3>Follow up where people actually reply.</h3>
+            <p>Sequences combine SMS, callbacks and voicemail across days. A/B variants find the message that works, and AI replies keep the thread warm.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Two-way SMS with AI replies</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Multi-step sequences</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> A/B message variants</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg> Behaviour-based timing</li>
+            </ul>
+          </div>
+          <div class="mock" aria-hidden="true">
+            <div class="m-head"><span class="avatar"><svg><use href="#i-chat"/></svg></span><div><b>Sequence · Demo follow-up</b><small>DAY 1 OF 5</small></div><span class="st">ACTIVE</span></div>
+            <div class="chat">
+              <p class="out">Hi Sam — thanks for the demo request. Does Thursday 10:00 work?</p>
+              <p class="in">Thursday is good. Send a calendar invite?</p>
+              <p class="out">Sent. I'll also call 30 minutes before.</p>
+            </div>
+            <div class="m-note">REPLY RECEIVED · MEETING BOOKED · SEQUENCE PAUSED</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section class="section" id="calculator">
+    <div class="container calc">
+      <div>
+        <span class="kicker">Pricing</span>
+        <h2>Pay for connected calls. Nothing else.</h2>
+        <p class="lead">No seat licences, no annual contract, no platform fee. Move the slider to see what a month of calling costs.</p>
+        <ul class="pts">
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg> 1 credit = 1 connected call</li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg> Failed, busy or unanswered calls are free</li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg> Credits never expire</li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg> Volume pricing from 5,000 credits</li>
+        </ul>
+      </div>
+
+      <div class="calc-card">
+        <label for="calls">Connected calls per month <output id="callsOut" for="calls">500</output></label>
+        <input id="calls" type="range" min="100" max="2000" step="50" value="500" aria-describedby="calcNote">
+        <div class="scale"><span>100</span><span>500</span><span>1,000</span><span>2,000</span></div>
+        <div class="out-grid">
+          <div class="out"><small>Estimated spend</small><b id="spend">$45</b></div>
+          <div class="out"><small>Rate per call</small><b id="rate">$0.09</b></div>
+        </div>
+        <p class="save" id="save">You save 10% versus the $0.10 starter rate.</p>
+        <a class="btn btn-primary" href="/register">Start with 100 credits <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <p class="calc-note" id="calcNote">Estimates only. Volume pricing is quoted for 5,000+ calls. Failed calls are free.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING CARDS -->
+  <section class="section section-tight">
+    <div class="container">
+      <div class="center">
+        <span class="kicker">Credit packs</span>
+        <h2>Buy once. Use whenever.</h2>
+      </div>
+      <div class="pricing">
+        <article class="plan">
+          <h3>Starter</h3>
+          <div class="amt"><b>$10</b><span>once</span></div>
+          <p class="cred">100 credits · $0.10 / call</p>
+          <ul><li><svg aria-hidden="true"><use href="#i-check"/></svg> Inbound or outbound</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> 40+ languages</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Credits never expire</li></ul>
+          <a class="btn btn-ghost" href="/register">Buy credits</a>
+        </article>
+        <article class="plan pop">
+          <span class="tag">Most popular</span>
+          <h3>Growth</h3>
+          <div class="amt"><b>$45</b><span>once</span></div>
+          <p class="cred">500 credits · $0.09 / call · 10% off</p>
+          <ul><li><svg aria-hidden="true"><use href="#i-check"/></svg> Everything in Starter</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Follow-up sequences</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Priority support</li></ul>
+          <a class="btn btn-primary" href="/register">Buy 500 credits</a>
+        </article>
+        <article class="plan">
+          <h3>Scale</h3>
+          <div class="amt"><b>$80</b><span>once</span></div>
+          <p class="cred">1,000 credits · $0.08 / call · 20% off</p>
+          <ul><li><svg aria-hidden="true"><use href="#i-check"/></svg> Everything in Growth</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Best self-serve rate</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Volume reporting</li></ul>
+          <a class="btn btn-ghost" href="/register">Buy 1,000 credits</a>
+        </article>
+        <article class="plan">
+          <h3>Volume</h3>
+          <div class="amt"><b>Custom</b></div>
+          <p class="cred">5,000+ credits · best rate</p>
+          <ul><li><svg aria-hidden="true"><use href="#i-check"/></svg> Dedicated onboarding</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> Integration support</li><li><svg aria-hidden="true"><use href="#i-check"/></svg> SLA options</li></ul>
+          <a class="btn btn-ghost" href="#contact">Talk to sales</a>
+        </article>
+      </div>
+      <div class="price-note">
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> No subscription</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> No setup fee</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> Cancel anytime</span>
+        <span><svg aria-hidden="true"><use href="#i-check"/></svg> Invoice on request</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="center">
+        <span class="kicker">Questions</span>
+        <h2>Before your first campaign.</h2>
+      </div>
+      <div class="faq">
+        <details open><summary>What is AgentQ AI?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">A cloud platform for AI voice agents, automated calling campaigns and two-way SMS. Agents hold real conversations in 40+ languages, qualify, book and transfer — billed pay-as-you-go with credits that never expire.</div></details>
+        <details><summary>How do AI voice agents work?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">Speech-to-text transcribes the caller, a language model decides the reply from your script and knowledge base, and text-to-speech answers. Typical responses arrive in under a second, and every call is transcribed and scored.</div></details>
+        <details><summary>How much does a call cost?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">One credit per connected call: $0.10 on the 100 pack, $0.09 on the 500 pack and $0.08 on the 1,000 pack. Failed, busy or unanswered calls are free.</div></details>
+        <details><summary>Do credits expire?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">No. Use them for campaigns, inbound agents, SMS or sequences whenever you need them.</div></details>
+        <details><summary>Which languages are supported?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">40+ voice languages including English, Spanish, French, German, Portuguese, Arabic, Hindi, Swahili, Chinese and Japanese. The interface is available in 10 languages.</div></details>
+        <details><summary>Can the AI transfer to a human?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">Yes — on rules you set: a request for a person, a specific intent, a sentiment threshold or a high-value lead. The human receives the transcript and context.</div></details>
+        <details><summary>Do I need my own Twilio or Plivo account?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">No. Twilio, Plivo and Africa’s Talking are supported, including number purchase. You can also bring numbers or connect a SIP trunk.</div></details>
+        <details><summary>How long does setup take?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="a">Most teams make their first AI call in under an hour: connect a number, build the agent, launch a campaign or point an inbound line at it.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="container" id="contact">
+    <div class="cta">
+      <h2>Your next 100 calls could answer themselves.</h2>
+      <p>Start with $10 of credits. No subscription, no setup fee, and unused credits stay on your account.</p>
+      <div class="actions">
+        <a class="btn btn-primary btn-lg" href="/register">Start with $10 <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost btn-lg" href="/login">Sign in</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="/"><span class="brand-mark"><svg aria-hidden="true"><use href="#i-phone"/></svg></span><span>AgentQ AI</span></a>
+        <p>AI voice agents, calling campaigns and two-way SMS for teams that live on the phone.</p>
+      </div>
+      <div>
+        <h3>Platform</h3>
+        <ul>
+          <li><a href="#platform">AI voice agents</a></li>
+          <li><a href="#platform">Calling campaigns</a></li>
+          <li><a href="#platform">Two-way SMS</a></li>
+          <li><a href="#platform">Sequences</a></li>
+          <li><a href="#calculator">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="/documentation">Documentation</a></li>
+          <li><a href="/llms.txt">llms.txt</a></li>
+          <li><a href="/sitemap.xml">Sitemap</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/page/privacy-policy">Privacy Policy</a></li>
+          <li><a href="/page/terms-and-conditions">Terms &amp; Conditions</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 AgentQ AI. All rights reserved.</span>
+      <span class="mono">UPDATED 19 NOV 2026 · VOICE AI PLATFORM</span>
+    </div>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+  // mobile nav
+  var t=document.getElementById('navToggle'),n=document.getElementById('navLinks');
+  if(t&&n){t.addEventListener('click',function(){var o=n.classList.toggle('open');t.setAttribute('aria-expanded',o?'true':'false');});}
+
+  // tabs
+  var tabs=[].slice.call(document.querySelectorAll('[role=tab]'));
+  function select(tab){
+    tabs.forEach(function(b){
+      var on=b===tab;
+      b.setAttribute('aria-selected',on?'true':'false');
+      b.tabIndex=on?0:-1;
+      var p=document.getElementById(b.getAttribute('aria-controls'));
+      if(p)p.hidden=!on;
+    });
+  }
+  tabs.forEach(function(tab,i){
+    tab.addEventListener('click',function(){select(tab);});
+    tab.addEventListener('keydown',function(e){
+      var k=e.key,next;
+      if(k==='ArrowRight'||k==='ArrowDown')next=tabs[(i+1)%tabs.length];
+      if(k==='ArrowLeft'||k==='ArrowUp')next=tabs[(i-1+tabs.length)%tabs.length];
+      if(k==='Home')next=tabs[0];
+      if(k==='End')next=tabs[tabs.length-1];
+      if(next){e.preventDefault();select(next);next.focus();}
+    });
+  });
+
+  // calculator
+  var range=document.getElementById('calls');
+  var out=document.getElementById('callsOut');
+  var spend=document.getElementById('spend');
+  var rateEl=document.getElementById('rate');
+  var save=document.getElementById('save');
+  function rateFor(n){return n<=100?0.10:n<=500?0.09:n<=1000?0.08:0.075;}
+  function update(){
+    var n=parseInt(range.value,10);
+    var r=rateFor(n);
+    var total=n*r;
+    out.textContent=n.toLocaleString();
+    rateEl.textContent='$'+r.toFixed(2);
+    spend.textContent='$'+total.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});
+    if(r<0.10){
+      var pct=Math.round((1-r/0.10)*100);
+      save.textContent='You save '+pct+'% versus the $0.10 starter rate.';
+    }else{
+      save.textContent='Starter rate — no volume discount needed.';
+    }
+  }
+  range.addEventListener('input',update);
+  update();
+})();
+</script>
+</body>
+</html>

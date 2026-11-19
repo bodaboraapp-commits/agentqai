@@ -822,10 +822,25 @@ class TwimlController extends Controller
             'targets' => $targets,
         ]);
 
+        $greeting = trim((string) config('africastalking.voice.inbound.greeting'));
+        if ($greeting === '') {
+            $greeting = 'No one is available to take your call. Please leave a message after the tone.';
+        }
+        $maxSeconds = max(5, (int) config('africastalking.voice.inbound.voicemail_max_seconds', 45));
+        $recordCallback = route('at-xml.voicemail', ['call' => $call->id]);
+
         return $callXml->buildResponse([
             $callXml->say('Connecting your call. Please wait.', ['language' => null]),
             $callXml->dial(implode(',', $targets), $dialOptions),
-            $callXml->say('The person you are trying to reach is not available. Goodbye!', ['language' => null]),
+            // The SIP/forward targets did not answer: let the caller leave a
+            // voicemail instead of ending with a dead-end message.
+            $callXml->say($greeting, [
+                'language' => null,
+                'record' => [
+                    'max_length' => $maxSeconds,
+                    'action' => $recordCallback,
+                ],
+            ]),
         ]);
     }
 

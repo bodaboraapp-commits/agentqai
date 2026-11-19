@@ -1,0 +1,405 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentQ AI â€” Landing page directions (internal review)</title>
+<meta name="description" content="Five design directions for the AgentQ AI landing page redesign, each with the same SEO and AI-overview content foundation.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#0a0a0c; --card:#121216; --card-2:#16161b; --line:#232329; --line-2:#32323b;
+  --text:#f2f2f4; --muted:#a0a0ab; --dim:#70707c;
+  --green:#12ab63; --green-2:#34e08f; --amber:#f3c969; --violet:#8b5cf6; --clay:#d97757; --blue:#22d3ee;
+  --max:1220px;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+h1,h2,h3,p,ul{margin:0}
+ul{padding:0;list-style:none}
+img{display:block;max-width:100%}
+.container{width:min(var(--max),calc(100% - 44px));margin-inline:auto}
+.skip{position:absolute;left:-9999px;background:#fff;color:#000;padding:12px 18px;z-index:100}
+.skip:focus{left:12px;top:12px}
+:focus-visible{outline:2px solid var(--green-2);outline-offset:3px;border-radius:4px}
+.mono{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+
+/* header */
+.top{border-bottom:1px solid var(--line);background:rgba(10,10,12,.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:40}
+.top-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:-.02em;font-size:15px}
+.brand .m{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#12ab63,#0a3b25);display:grid;place-items:center;color:#fff}
+.brand .m svg{width:14px;height:14px}
+.brand span{color:var(--dim);font-weight:400}
+.top-meta{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+
+/* hero */
+.hero{padding:64px 0 40px;border-bottom:1px solid var(--line);background:radial-gradient(70% 120% at 20% 0%,rgba(18,171,99,.10),transparent 55%)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 3px rgba(52,224,143,.15)}
+h1{font-size:clamp(2.2rem,4.6vw,3.8rem);line-height:1.04;letter-spacing:-.045em;font-weight:800;margin:20px 0 0;max-width:22ch}
+h1 em{font-style:normal;color:var(--green-2)}
+.hero p.lead{color:var(--muted);font-size:1.02rem;max-width:56ch;margin-top:18px}
+.hero-stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:26px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.hero-stats span{display:inline-flex;align-items:center;gap:8px}
+.hero-stats span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* how to review */
+.review{padding:34px 0 8px}
+.review-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.rev{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--card)}
+.rev .n{font-family:var(--mono);font-size:10px;color:var(--green-2);letter-spacing:.14em;display:block;margin-bottom:8px}
+.rev b{font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+.rev p{color:var(--muted);font-size:13px;margin-top:5px}
+
+/* samples */
+.samples{padding:46px 0 20px}
+.samples-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.samples-head h2{font-size:clamp(1.7rem,3vw,2.4rem);letter-spacing:-.035em;line-height:1.08;font-weight:750}
+.samples-head p{color:var(--muted);font-size:14px;margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.card.wide{grid-column:1 / -1}
+.card.wide .inner{display:grid;grid-template-columns:1.05fr .95fr;align-items:stretch}
+.shot{position:relative;overflow:hidden;background:linear-gradient(135deg,#1a1a20,#0f0f13);border-bottom:1px solid var(--line);aspect-ratio:16/10}
+.card.wide .shot{aspect-ratio:auto;border-bottom:0;border-right:1px solid var(--line);min-height:340px}
+.shot img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.shot .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.shot .num{position:absolute;top:12px;left:12px;z-index:2;background:rgba(8,8,10,.78);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);border-radius:7px;padding:5px 9px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:#fff}
+.body{padding:22px 22px 24px;display:flex;flex-direction:column;flex:1}
+.card.wide .body{padding:28px}
+.card h3{font-size:20px;letter-spacing:-.02em;font-weight:750;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card h3 .tag{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--green-2);border:1px solid rgba(52,224,143,.3);background:rgba(52,224,143,.08);padding:3px 7px;border-radius:4px;font-weight:600}
+.card .tagline{color:var(--muted);font-size:14px;margin-top:8px}
+.swatches{display:flex;gap:6px;margin:14px 0}
+.swatches i{width:22px;height:22px;border-radius:6px;display:block;border:1px solid rgba(255,255,255,.1)}
+.card .for{font-size:12.5px;color:var(--dim);margin-bottom:12px}
+.card .for b{color:var(--text);font-weight:600}
+.card ul.diff{display:grid;gap:7px;margin:0 0 18px;font-size:13px;color:var(--muted)}
+.card ul.diff li{display:flex;gap:8px;align-items:flex-start}
+.card ul.diff li::before{content:"â†’";color:var(--green-2);font-family:var(--mono);font-size:11px;margin-top:2px;flex:none}
+.card .actions{margin-top:auto;display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:650;text-decoration:none;border:1px solid var(--line-2);color:var(--text);transition:background .18s,border-color .18s}
+.btn:hover{background:rgba(255,255,255,.06);border-color:#4a4a56}
+.btn-primary{background:var(--green);border-color:var(--green);color:#04140b}
+.btn-primary:hover{background:var(--green-2);border-color:var(--green-2)}
+
+/* compare */
+.compare{padding:56px 0 10px}
+.compare h2{font-size:clamp(1.7rem,3vw,2.3rem);letter-spacing:-.035em;font-weight:750}
+.compare p.sub{color:var(--muted);font-size:14px;margin-top:6px;margin-bottom:20px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:13px}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:600;background:#0e0e12}
+tbody th{font-weight:650;font-size:13px;white-space:nowrap;color:var(--text)}
+tbody td{color:var(--muted)}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+td b{color:var(--text);font-weight:650}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 8px;border:1px solid rgba(52,224,143,.3);background:rgba(52,224,143,.08);color:var(--green-2)}
+.pill.mid{border-color:rgba(243,201,105,.3);background:rgba(243,201,105,.08);color:var(--amber)}
+.pill.low{border-color:var(--line-2);background:rgba(255,255,255,.03);color:var(--dim)}
+
+/* foundation */
+.foundation{padding:56px 0;border-top:1px solid var(--line);margin-top:46px}
+.found-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:start}
+.found-grid h2{font-size:clamp(1.7rem,3vw,2.4rem);letter-spacing:-.035em;font-weight:750;line-height:1.1;max-width:16ch}
+.found-grid p.lead{color:var(--muted);font-size:14px;margin-top:12px;max-width:36ch}
+.found-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--card);font-size:12.5px;color:var(--muted);align-items:flex-start}
+.f svg{width:14px;height:14px;color:var(--green-2);flex:none;margin-top:2px}
+.f b{display:block;color:var(--text);font-weight:600;font-size:12.5px;margin-bottom:1px}
+
+/* recommendation */
+.rec{border:1px solid rgba(52,224,143,.28);background:linear-gradient(180deg,rgba(18,171,99,.10),rgba(18,171,99,.02));border-radius:16px;padding:26px 28px;margin-top:10px}
+.rec h3{font-size:19px;letter-spacing:-.02em;font-weight:750;display:flex;align-items:center;gap:9px}
+.rec h3 svg{width:18px;height:18px;color:var(--green-2)}
+.rec p{color:var(--muted);font-size:14px;margin-top:10px;max-width:70ch}
+.rec .picks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.pick{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.18)}
+.pick small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.pick b{font-size:13.5px;display:block}
+.pick span{font-size:11.5px;color:var(--muted);display:block;margin-top:2px}
+
+/* footer */
+.footer{border-top:1px solid var(--line);padding:32px 0 40px;margin-top:48px}
+.footer-grid{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.footer p{color:var(--dim);font-size:12px;max-width:44ch;line-height:1.7}
+.footer .mono{color:var(--dim);font-size:9px;letter-spacing:.1em}
+.footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line-2)}
+.footer a:hover{color:#fff}
+
+@media (max-width:1024px){
+  .grid{grid-template-columns:1fr}
+  .card.wide .inner{grid-template-columns:1fr}
+  .card.wide .shot{border-right:0;border-bottom:1px solid var(--line);aspect-ratio:16/10;min-height:0}
+  .review-grid{grid-template-columns:1fr}
+  .found-grid{grid-template-columns:1fr;gap:24px}
+  .rec .picks{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .container{width:calc(100% - 28px)}
+  .hero{padding:40px 0 28px}
+  .found-list{grid-template-columns:1fr}
+  .top-meta{display:none}
+  .samples-head{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="container top-inner">
+    <div class="brand">
+      <span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+      AgentQ AI <span>Â· landing page directions</span>
+    </div>
+    <span class="top-meta">5 samples Â· 19 Nov 2026 Â· internal review</span>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span> Redesign proposal Â· choose one to adopt</span>
+      <h1>Five directions for the new <em>AgentQ AI</em> landing page.</h1>
+      <p class="lead">Every sample is a complete, standalone page with the same conversion spine and the same SEO / AI-overview foundation. What changes is the design language: how the product is shown, how trust is built and how a visitor is moved to start.</p>
+      <div class="hero-stats">
+        <span>5 complete pages</span>
+        <span>0 external dependencies</span>
+        <span>Mobile + desktop</span>
+        <span>Schema.org @graph</span>
+        <span>Answer-first content</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="review">
+    <div class="container review-grid">
+      <div class="rev"><span class="n">STEP 01</span><b>Open the full pages</b><p>Each sample is a single HTML file. Open it in a browser, then resize the window to check the mobile layout.</p></div>
+      <div class="rev"><span class="n">STEP 02</span><b>Judge three things</b><p>Which one feels like AgentQ AI today? Which one would you trust with a card? Which one best explains the product to a stranger â€” or an AI?</p></div>
+      <div class="rev"><span class="n">STEP 03</span><b>Pick one, or mix</b><p>Choose a direction, or take the content spine from one and the visual language from another. I will implement the chosen version in the Laravel + React stack.</p></div>
+    </div>
+  </section>
+
+  <section class="samples" id="samples">
+    <div class="container">
+      <div class="samples-head">
+        <div>
+          <h2>The five samples</h2>
+          <p>Ordered from most technical to most editorial.</p>
+        </div>
+        <span class="mono" style="color:var(--dim)">Click â€œOpen full pageâ€ for the real thing</span>
+      </div>
+
+      <div class="grid">
+        <!-- 01 -->
+        <article class="card">
+          <div class="shot">
+            <span class="num">01 â€” CONSOLE</span>
+            <img src="screenshots/01-console-desktop.png" alt="Console sample: dark product-led landing page with a live AI call console" loading="lazy" onerror="this.style.display='none'">
+          </div>
+          <div class="body">
+            <h3>Console <span class="tag">Dark Â· product-led</span></h3>
+            <p class="tagline">A live-call console is the hero. The page sells the product by showing it running: transcript, latency, outcome and credits.</p>
+            <div class="swatches" aria-label="Palette">
+              <i style="background:#06090b"></i><i style="background:#12ab63"></i><i style="background:#6ceac6"></i><i style="background:#e7eef2"></i>
+            </div>
+            <p class="for">Best for <b>technical buyers, ops teams and developers</b></p>
+            <ul class="diff">
+              <li>Feels like a tool you can log into today, not a brochure</li>
+              <li>Bento feature grid and a blunt comparison table</li>
+              <li>Strong â€œshow, donâ€™t tellâ€ for demos and AI crawlers</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="landing/01-console.html">Open full page â†’</a>
+              <a class="btn" href="screenshots/01-console-desktop.png">Preview</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 -->
+        <article class="card">
+          <div class="shot">
+            <span class="num">02 â€” LEDGER</span>
+            <img src="screenshots/02-ledger-desktop.png" alt="Ledger sample: light editorial landing page with an answer-first box and key facts" loading="lazy" onerror="this.style.display='none'">
+          </div>
+          <div class="body">
+            <h3>Ledger <span class="tag">Editorial Â· answer-first</span></h3>
+            <p class="tagline">A product overview written like a publication. The definition, key facts, comparison, glossary and FAQ are the design.</p>
+            <div class="swatches" aria-label="Palette">
+              <i style="background:#f7f3ea"></i><i style="background:#0f5132"></i><i style="background:#e9b949"></i><i style="background:#1a1913"></i>
+            </div>
+            <p class="for">Best for <b>SEO, AI Overviews and considered buyers</b></p>
+            <ul class="diff">
+              <li>Answer-first â€œquick answerâ€ + at-a-glance key facts</li>
+              <li>Glossary with DefinedTerm schema â€” highly extractable</li>
+              <li>â€œCite this pageâ€ line and a visible last-updated date</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="landing/02-ledger.html">Open full page â†’</a>
+              <a class="btn" href="screenshots/02-ledger-desktop.png">Preview</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 03 -->
+        <article class="card">
+          <div class="shot">
+            <span class="num">03 â€” ORBIT</span>
+            <img src="screenshots/03-orbit-desktop.png" alt="Orbit sample: dark gradient SaaS landing page with dashboard preview and credits calculator" loading="lazy" onerror="this.style.display='none'">
+          </div>
+          <div class="body">
+            <h3>Orbit <span class="tag">Gradient Â· conversion</span></h3>
+            <p class="tagline">A modern AI-SaaS aesthetic with a dashboard preview, use-case tabs and a credits calculator that turns pricing into a decision.</p>
+            <div class="swatches" aria-label="Palette">
+              <i style="background:#07061a"></i><i style="background:#8b5cf6"></i><i style="background:#22d3ee"></i><i style="background:#34e08f"></i>
+            </div>
+            <p class="for">Best for <b>paid traffic, demos and fast conversion</b></p>
+            <ul class="diff">
+              <li>Interactive credits calculator lowers pricing anxiety</li>
+              <li>Inbound / outbound / SMS tabs show three products in one</li>
+              <li>Most familiar â€œAI startupâ€ pattern â€” lowest explanation cost</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="landing/03-orbit.html">Open full page â†’</a>
+              <a class="btn" href="screenshots/03-orbit-desktop.png">Preview</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 -->
+        <article class="card">
+          <div class="shot">
+            <span class="num">04 â€” HANDOFF</span>
+            <img src="screenshots/04-handoff-desktop.png" alt="Handoff sample: warm, rounded landing page built around an AI-to-human call transfer" loading="lazy" onerror="this.style.display='none'">
+          </div>
+          <div class="body">
+            <h3>Handoff <span class="tag">Warm Â· human</span></h3>
+            <p class="tagline">The product story is a conversation: the AI answers, the caller asks for a person, the call transfers warm. Built on trust, not tech.</p>
+            <div class="swatches" aria-label="Palette">
+              <i style="background:#faf6ee"></i><i style="background:#12ab63"></i><i style="background:#d97757"></i><i style="background:#1d2a23"></i>
+            </div>
+            <p class="for">Best for <b>SMBs, clinics, services and non-technical buyers</b></p>
+            <ul class="diff">
+              <li>Handoff is the headline feature, not a footnote</li>
+              <li>Warm, approachable tone that reduces AI distrust</li>
+              <li>Friendly microcopy: â€œCredits, not contractsâ€</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="landing/04-handoff.html">Open full page â†’</a>
+              <a class="btn" href="screenshots/04-handoff-desktop.png">Preview</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 05 wide -->
+        <article class="card wide">
+          <div class="inner">
+            <div class="shot">
+              <span class="num">05 â€” NORTH</span>
+              <img src="screenshots/05-north-desktop.png" alt="North sample: minimal white enterprise landing page with oversized typography and numbered sections" loading="lazy" onerror="this.style.display='none'">
+            </div>
+            <div class="body">
+              <h3>North <span class="tag">Minimal Â· enterprise</span></h3>
+              <p class="tagline">Hairline rules, oversized type and numbered sections. The calm, procurement-friendly direction â€” closer to Linear or Stripe than to a startup launch page.</p>
+              <div class="swatches" aria-label="Palette">
+                <i style="background:#ffffff"></i><i style="background:#0b0b0b"></i><i style="background:#12ab63"></i><i style="background:#f6f6f4"></i>
+              </div>
+              <p class="for">Best for <b>enterprise, regulated buyers and brand credibility</b></p>
+              <ul class="diff">
+                <li>Reads as an established company, not an experiment</li>
+                <li>Pricing as a clean table â€” easy to compare and to quote</li>
+                <li>Fastest to load and the easiest to keep accessible</li>
+              </ul>
+              <div class="actions">
+                <a class="btn btn-primary" href="landing/05-north.html">Open full page â†’</a>
+                <a class="btn" href="screenshots/05-north-desktop.png">Preview</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="compare">
+    <div class="container">
+      <h2>At a glance</h2>
+      <p class="sub">All five carry the same SEO/GEO foundation. They differ in how they persuade.</p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Direction</th><th scope="col">Visual language</th><th scope="col">Strongest at</th><th scope="col">Best audience</th><th scope="col">Conversion</th><th scope="col">SEO / GEO</th><th scope="col">Build effort</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">01 Console</th><td>Dark, technical, console UI</td><td>Proving the product works</td><td>Developers, ops, technical founders</td><td><span class="pill mid">High</span></td><td><span class="pill">Very high</span></td><td>Medium</td></tr>
+            <tr><th scope="row">02 Ledger</th><td>Paper, serif, editorial rules</td><td>Being quoted by AI and search</td><td>Researchers, considered buyers</td><td><span class="pill mid">Mediumâ€“high</span></td><td><span class="pill">Highest</span></td><td>Medium</td></tr>
+            <tr><th scope="row">03 Orbit</th><td>Dark gradient, glass, motion</td><td>Paid traffic and demos</td><td>SaaS buyers, growth teams</td><td><span class="pill">Highest</span></td><td><span class="pill">High</span></td><td>Mediumâ€“high</td></tr>
+            <tr><th scope="row">04 Handoff</th><td>Warm cream, rounded, human</td><td>Trust and non-technical buyers</td><td>SMBs, clinics, services</td><td><span class="pill">High</span></td><td><span class="pill">High</span></td><td>Lowâ€“medium</td></tr>
+            <tr><th scope="row">05 North</th><td>White, hairline, oversized type</td><td>Enterprise credibility</td><td>Enterprise, regulated, procurement</td><td><span class="pill mid">Medium</span></td><td><span class="pill">Very high</span></td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="foundation">
+    <div class="container found-grid">
+      <div>
+        <h2>What every sample already has.</h2>
+        <p class="lead">The redesign is not only visual. Each page ships with the same search and answer-engine foundation, baked into the markup â€” not bolted on later.</p>
+        <div style="margin-top:20px">
+          <a class="btn" href="README.md">Read the full notes (README) â†’</a>
+        </div>
+      </div>
+      <div class="found-list">
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>One H1, clean hierarchy</b>Semantic landmarks, skip link and focus states.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Answer-first definition</b>A 40â€“60 word â€œWhat is AgentQ AI?â€ block near the top.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Key facts</b>Category, channels, languages, billing and handoff, in a table.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Comparison table</b>AgentQ vs dialer add-on vs in-house build.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>8â€“10 FAQs</b>Written as direct answers, marked up as FAQPage.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>JSON-LD @graph</b>Organization, WebSite, WebPage, SoftwareApplication + offers, HowTo, FAQPage, BreadcrumbList.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>llms.txt link</b>Points agents at the machine-readable summary.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Zero external requests</b>System fonts, inline CSS, tiny JS â€” strong Core Web Vitals.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Reduced-motion + keyboard</b>Accessible by default, including native FAQ accordions.</span></div>
+        <div class="f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Freshness signals</b>Visible â€œlast updatedâ€ and, in Ledger, a citation line.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="rec">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 1.9 5.7L20 10l-5.7 1.9L12 18l-1.9-5.7L4 10l5.7-1.9L12 3z"/></svg> My recommendation</h3>
+      <p>If the goal is to be found and quoted â€” by Google AI Overviews, ChatGPT, Claude and Perplexity â€” <b>02 Ledger</b> is the strongest single choice: its whole structure is extractable. If the goal is demo requests and paid traffic, <b>03 Orbit</b> converts fastest. For enterprise procurement, <b>05 North</b> carries the most credibility. The best hybrid for AgentQ AI: Ledgerâ€™s content spine, Consoleâ€™s live-call product moment, and Orbitâ€™s calculator.</p>
+      <div class="picks">
+        <div class="pick"><small>One choice</small><b>02 Ledger</b><span>SEO / AI Overview first</span></div>
+        <div class="pick"><small>Conversion first</small><b>03 Orbit</b><span>Calculator + product tabs</span></div>
+        <div class="pick"><small>Enterprise first</small><b>05 North</b><span>Minimal, procurement-safe</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <p>Files live in <code>design-samples/</code>. Open <code>landing/*.html</code> directly in a browser â€” no build step, no server required. Screenshots are in <code>screenshots/</code>. Notes and the implementation plan are in <code>README.md</code>.</p>
+    </div>
+    <div style="text-align:right">
+      <p class="mono">AgentQ AI Â· redesign proposal Â· 19 Nov 2026</p>
+      <p style="margin-top:6px"><a href="landing/02-ledger.html">Open the recommended sample â†’</a></p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
