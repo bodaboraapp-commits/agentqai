@@ -155,6 +155,9 @@ class AfricaSTalkingCallXmlGenerator implements CallXmlInterface
             $this->append($dom, $response, 'Record', null, [
                 'maxLength' => $options['record']['max_length'] ?? 30,
                 'callBackUrl' => $options['record']['action'] ?? null,
+                // The greeting says "after the tone", so AT must play the beep.
+                'playBeep' => $options['record']['play_beep'] ?? 'true',
+                'trimSilence' => 'true',
             ]);
         }
     }
