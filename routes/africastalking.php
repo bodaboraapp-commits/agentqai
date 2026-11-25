@@ -449,6 +449,42 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
 
             return $result;
         })(),
+        'at_verify' => (function () {
+            $config = \App\Models\TelephonyProviderConfig::query()->where('name', 'africastalking')->latest('id')->first();
+            $username = trim((string) ($config?->credential('username') ?? $config?->credential('account_id') ?? ''));
+            $apiKey = trim((string) ($config?->credential('api_key') ?? $config?->credential('auth_token') ?? ''));
+
+            if ($username === '' || $apiKey === '') {
+                return ['error' => 'stored AT username or api key missing'];
+            }
+
+            $fingerprint = strlen($apiKey) > 16
+                ? substr($apiKey, 0, 10).'…'.substr($apiKey, -4)
+                : 'short('.strlen($apiKey).')';
+
+            $result = [
+                'stored_username' => $username,
+                'stored_api_key_fingerprint' => $fingerprint,
+                'stored_api_key_length' => strlen($apiKey),
+                'api_base_url' => config('africastalking.api.base_url'),
+                'api_version_segment' => config('africastalking.api.version_segment'),
+                'enabled' => config('africastalking.enabled'),
+            ];
+
+            try {
+                $verify = app(\App\Services\Telephony\AfricaSTalking\AfricaSTalkingVoiceProvider::class)
+                    ->verifyCredentials(['username' => $username, 'api_key' => $apiKey]);
+                $result['verify'] = [
+                    'valid' => (bool) ($verify['valid'] ?? false),
+                    'account' => $verify['account_name'] ?? null,
+                    'error' => $verify['error'] ?? null,
+                ];
+            } catch (\Throwable $e) {
+                $result['verify'] = ['exception' => $e->getMessage()];
+            }
+
+            return $result;
+        })(),
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');
