@@ -646,6 +646,32 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
 
             return $result;
         })(),
+        'softphone_recent_errors' => (function () {
+            $path = storage_path('logs/laravel.log');
+            if (! is_file($path)) {
+                return ['error' => 'no log file'];
+            }
+
+            $size = filesize($path) ?: 0;
+            $handle = fopen($path, 'rb');
+            if ($handle === false) {
+                return ['error' => 'log unreadable'];
+            }
+
+            $read = min($size, 300 * 1024);
+            fseek($handle, max(0, $size - $read));
+            $tail = (string) fread($handle, $read);
+            fclose($handle);
+
+            $matches = [];
+            foreach (preg_split('/\r?\n/', $tail) as $line) {
+                if (preg_match('/Softphone|Africa\'s Talking|capability|503|voicemail|SIP/i', $line) === 1) {
+                    $matches[] = mb_substr($line, 0, 320);
+                }
+            }
+
+            return array_slice($matches, -8);
+        })(),
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');
