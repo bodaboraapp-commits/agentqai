@@ -112,6 +112,75 @@ Route::middleware(['auth', 'role:admin'])->get('/admin/campaigns/dial-now', func
 })->name('africastalking.admin-campaign-dial-now');
 
 
+// Admin-only web runner for the SIP registration probe, for hosts without a
+// terminal (shared cPanel). The probe runs server-side, so its REGISTER comes
+// from the server's egress IP - which is what AT needs when checking an IP
+// allow-list. Output is plain text with the server's public IP on the first line.
+Route::match(['get', 'post'], '/admin/telephony/sip-probe', function (\Illuminate\Http\Request $request) {
+    if ($request->isMethod('post')) {
+        $request->validate([
+            'username' => ['required', 'string', 'max:190'],
+            'password' => ['required', 'string', 'max:190'],
+        ]);
+
+        $arguments = [
+            '--username' => (string) $request->input('username'),
+            '--password' => (string) $request->input('password'),
+            '--domain' => (string) $request->input('domain', 'ke.sip.africastalking.com'),
+            '--port' => (string) $request->input('port', '5060'),
+        ];
+
+        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+
+        try {
+            \Illuminate\Support\Facades\Artisan::call('telephony:sip-probe', $arguments, $output);
+            $text = $output->fetch();
+        } catch (\Throwable $e) {
+            $text = 'ERROR: '.$e->getMessage();
+        }
+
+        if (trim($text) === '') {
+            $text = 'No output. Check storage/logs/laravel.log for details.';
+        }
+
+        return response($text, 200)->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
+    $token = csrf_token();
+
+    return response(<<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SIP probe</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;background:#111;color:#eee}
+input{width:100%;padding:10px;margin:6px 0 14px;border:1px solid #444;border-radius:6px;background:#1c1c1c;color:#eee}
+button{padding:10px 18px;border:0;border-radius:6px;background:#22c55e;color:#04220f;font-weight:600;cursor:pointer}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h2>AT SIP registration probe (runs on this server)</h2>
+<p><small>The REGISTER below comes from this server's public IP. Use the renewed SIP password. Do not run it repeatedly: failed auth can block the IP.</small></p>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<label>Username</label>
+<input name="username" value="agent1.AgentQ_AI" required>
+<label>Password</label>
+<input name="password" type="password" required>
+<label>Domain</label>
+<input name="domain" value="ke.sip.africastalking.com">
+<label>Port</label>
+<input name="port" value="5060">
+<button type="submit">Run probe</button>
+</form>
+</body>
+</html>
+HTML)->header('Content-Type', 'text/html; charset=utf-8');
+})->name('africastalking.admin-sip-probe');
+
 // (git ref + file mtimes + presence of recent methods), because stale OPcache
 // on shared hosting can keep executing old classes after `git pull`.
 Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
