@@ -105,9 +105,22 @@ const MIN_TOKEN_REFRESH_INTERVAL_MS = 60_000;
  */
 async function getJson<T>(url: string): Promise<T> {
   if (typeof window.axios?.get === 'function') {
-    const response = await window.axios.get(url);
+    try {
+      const response = await window.axios.get(url);
 
-    return response.data as T;
+      return response.data as T;
+    } catch (error: any) {
+      // Prefer the server's own explanation (e.g. "The softphone could not be
+      // set up with Africa's Talking: ...") over axios's generic "status 503".
+      const serverMessage = error?.response?.data?.error;
+      if (typeof serverMessage === 'string' && serverMessage !== '') {
+        throw new Error(serverMessage);
+      }
+
+      const status = error?.response?.status;
+
+      throw new Error(status ? `Request to ${url} failed with status ${status}` : (error?.message ?? `Request to ${url} failed`));
+    }
   }
 
   const response = await fetch(url, {
@@ -116,7 +129,14 @@ async function getJson<T>(url: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Request to ${url} failed with status ${response.status}`);
+    let serverMessage = '';
+    try {
+      const body = await response.json();
+      serverMessage = typeof body?.error === 'string' ? body.error : '';
+    } catch {
+      // non-JSON error body
+    }
+    throw new Error(serverMessage || `Request to ${url} failed with status ${response.status}`);
   }
 
   return (await response.json()) as T;

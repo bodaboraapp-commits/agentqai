@@ -189,7 +189,9 @@ class IssueSoftphoneTokenAction
                 'error' => $e->getMessage(),
             ]);
 
-            throw new SoftphoneUnavailableException('The softphone could not be set up with Africa\'s Talking. Please try again, or contact your administrator.');
+            throw new SoftphoneUnavailableException(
+                'The softphone could not be set up with Africa\'s Talking: '.mb_substr($e->getMessage(), 0, 220)
+            );
         }
 
         return [

@@ -64,24 +64,50 @@ class AfricaSTalkingWebRTCTokenProvider implements WebRTCTokenProviderInterface
         // AT clientName has no spaces and is the identity calls show up as.
         $clientName = preg_replace('/\s+/', '_', $identity) ?: $identity;
 
-        try {
-            // AT's capability-token endpoint accepts ONLY application/json
-            // (form-encoded bodies get a 415), with boolean incoming/outgoing
-            // and a numeric expire. Sending form data was why the browser
-            // softphone showed "Request failed with status code 503".
-            $response = Http::withHeaders(['apiKey' => $this->apiKey, 'Accept' => 'application/json'])
-                ->timeout((int) config('africastalking.api.timeout_seconds', 20))
-                ->asJson()
-                ->post((string) config('africastalking.api.webrtc_token_url'), [
-                    'username' => $this->username,
-                    'clientName' => $clientName,
-                    'phoneNumber' => trim($phoneNumber),
-                    'incoming' => true,
-                    'outgoing' => true,
-                    'expire' => $expiresIn,
-                ]);
-        } catch (\Throwable $e) {
-            throw new RuntimeException('Could not reach Africa\'s Talking to create a softphone token: '.$e->getMessage());
+        $response = null;
+        $lastError = null;
+
+        // AT's token service intermittently returns 503 (and the hosting can
+        // hiccup on the TLS connection). Retry once before surfacing an error,
+        // and log the real AT response so the browser message is not the only
+        // clue.
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                // AT's capability-token endpoint accepts ONLY application/json
+                // (form-encoded bodies get a 415), with boolean incoming/outgoing
+                // and a numeric expire.
+                $response = Http::withHeaders(['apiKey' => $this->apiKey, 'Accept' => 'application/json'])
+                    ->timeout((int) config('africastalking.api.timeout_seconds', 20))
+                    ->asJson()
+                    ->post((string) config('africastalking.api.webrtc_token_url'), [
+                        'username' => $this->username,
+                        'clientName' => $clientName,
+                        'phoneNumber' => trim($phoneNumber),
+                        'incoming' => true,
+                        'outgoing' => true,
+                        'expire' => $expiresIn,
+                    ]);
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+
+                if ($attempt < 2) {
+                    usleep(800000);
+
+                    continue;
+                }
+
+                throw new RuntimeException('Could not reach Africa\'s Talking to create a softphone token: '.$lastError);
+            }
+
+            if ($response->status() !== 503 || $attempt === 2) {
+                break;
+            }
+
+            usleep(800000);
+        }
+
+        if ($response === null) {
+            throw new RuntimeException('Africa\'s Talking softphone token request produced no response.');
         }
 
         if (! $response->successful()) {
@@ -89,7 +115,15 @@ class AfricaSTalkingWebRTCTokenProvider implements WebRTCTokenProviderInterface
                 ?? $response->json('message')
                 ?? mb_substr($response->body(), 0, 200);
 
-            throw new RuntimeException('Africa\'s Talking rejected the softphone token request: '.$message);
+            \Illuminate\Support\Facades\Log::error('AT softphone token request failed', [
+                'status' => $response->status(),
+                'username' => $this->username,
+                'client_name' => $clientName,
+                'phone_number' => $phoneNumber,
+                'body' => mb_substr($response->body(), 0, 500),
+            ]);
+
+            throw new RuntimeException('Africa\'s Talking rejected the softphone token request (HTTP '.$response->status().'): '.$message);
         }
 
         $token = (string) ($response->json('token') ?? '');
