@@ -165,11 +165,16 @@ class SipProbe extends Command
         }
 
         stream_set_timeout($socket, 8);
-        fwrite($socket, $message);
+        $writeError = $this->safeWrite($socket, $message);
+        if ($writeError !== null) {
+            fclose($socket);
+
+            return ['error' => 'send failed: '.$writeError];
+        }
 
         $body = '';
         while (! feof($socket)) {
-            $chunk = fread($socket, 4096);
+            $chunk = @fread($socket, 4096);
             if ($chunk === false || $chunk === '') {
                 break;
             }
@@ -191,7 +196,16 @@ class SipProbe extends Command
             return ['error' => 'connect failed: '.$errstr];
         }
 
-        fwrite($socket, $message);
+        // On shared cPanel hosts the kernel/firewall can refuse the send with
+        // EPERM ("Operation not permitted"). Suppress the warning so Laravel's
+        // error handler does not turn it into a fatal page error and report it
+        // as an unreachable transport instead.
+        $writeError = $this->safeWrite($socket, $message);
+        if ($writeError !== null) {
+            fclose($socket);
+
+            return ['error' => 'send blocked: '.$writeError];
+        }
 
         $read = [$socket];
         $write = null;
@@ -200,15 +214,31 @@ class SipProbe extends Command
 
         $body = '';
         if ($ready > 0) {
-            $body = (string) fread($socket, 8192);
+            $body = (string) @fread($socket, 8192);
         }
         fclose($socket);
 
         if ($body === '') {
-            return ['error' => 'no UDP response (timeout)'];
+            return ['error' => 'no UDP response (timeout or blocked)'];
         }
 
         return ['body' => $body];
+    }
+
+    /**
+     * Write without emitting a PHP warning; returns the error message on failure.
+     */
+    private function safeWrite($socket, string $message): ?string
+    {
+        $written = @fwrite($socket, $message);
+
+        if ($written === false) {
+            $error = error_get_last();
+
+            return $error['message'] ?? 'unknown write error';
+        }
+
+        return null;
     }
 
     private function optionsMessage(string $domain, int $port, string $scheme): string
