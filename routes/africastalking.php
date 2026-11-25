@@ -128,6 +128,7 @@ Route::match(['get', 'post'], '/admin/telephony/sip-probe', function (\Illuminat
             '--password' => (string) $request->input('password'),
             '--domain' => (string) $request->input('domain', 'ke.sip.africastalking.com'),
             '--port' => (string) $request->input('port', '5060'),
+            '--transport' => (string) $request->input('transport', 'auto'),
         ];
 
         $output = new \Symfony\Component\Console\Output\BufferedOutput();
@@ -174,6 +175,13 @@ small{color:#aaa}
 <input name="domain" value="ke.sip.africastalking.com">
 <label>Port</label>
 <input name="port" value="5060">
+<label>Transport</label>
+<select name="transport" style="width:100%;padding:10px;margin:6px 0 14px;border:1px solid #444;border-radius:6px;background:#1c1c1c;color:#eee">
+<option value="auto" selected>auto (try TCP, then UDP, then TLS)</option>
+<option value="tcp">TCP 5060</option>
+<option value="udp">UDP 5060</option>
+<option value="tls">TLS 5061</option>
+</select>
 <button type="submit">Run probe</button>
 </form>
 </body>
