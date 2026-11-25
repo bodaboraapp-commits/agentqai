@@ -179,6 +179,167 @@ small{color:#aaa}
 HTML)->header('Content-Type', 'text/html; charset=utf-8');
 })->name('africastalking.admin-campaign-dry-run');
 
+// Admin-only queue maintenance web runner (no terminal on shared hosts):
+// clear stale campaign-calls jobs, restart workers, cleanup stuck calls, or
+// reset a campaign's contacts so it can be started cleanly again.
+Route::match(['get', 'post'], '/admin/telephony/queue-maintenance', function (\Illuminate\Http\Request $request) {
+    $output = [];
+
+    if ($request->isMethod('post')) {
+        $action = (string) $request->input('action');
+
+        $run = function (string $command, array $arguments = []) use (&$output): void {
+            $buffer = new \Symfony\Component\Console\Output\BufferedOutput();
+            try {
+                \Illuminate\Support\Facades\Artisan::call($command, $arguments, $buffer);
+                $output[] = '$ artisan '.$command.' '.implode(' ', array_map(
+                    fn ($key, $value) => is_string($key) ? $key.'='.$value : $value,
+                    array_keys($arguments),
+                    $arguments
+                ));
+                $output[] = trim($buffer->fetch()) ?: '(no output)';
+            } catch (\Throwable $e) {
+                $output[] = 'ERROR running '.$command.': '.$e->getMessage();
+            }
+            $output[] = '';
+        };
+
+        if ($action === 'clear') {
+            $run('queue:clear', ['connection' => 'database', '--queue' => 'campaign-calls']);
+            $run('queue:restart');
+        } elseif ($action === 'cleanup') {
+            $run('telephony:cleanup-stuck', ['--minutes' => '0']);
+        } elseif ($action === 'reset') {
+            $campaignId = (int) $request->input('campaign_id', 0);
+            $campaign = \App\Models\Campaign::query()->find($campaignId);
+            if ($campaign === null) {
+                $output[] = 'ERROR: campaign not found.';
+            } else {
+                $reset = \App\Models\CampaignContact::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->whereIn('status', ['in_progress', 'failed', 'queued'])
+                    ->update(['status' => 'pending', 'call_attempts' => 0]);
+                $campaign->update(['status' => 'paused']);
+                $output[] = "Reset {$reset} contact(s) to pending and paused campaign #{$campaign->id}.";
+            }
+        }
+
+        return response(implode("\n", $output), 200)->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
+    $token = csrf_token();
+
+    return response(<<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Queue maintenance</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 16px;background:#111;color:#eee}
+form{margin:18px 0;padding:14px;border:1px solid #333;border-radius:8px}
+input{padding:8px;margin:4px 0 10px;border:1px solid #444;border-radius:6px;background:#1c1c1c;color:#eee}
+button{padding:9px 16px;border:0;border-radius:6px;background:#22c55e;color:#04220f;font-weight:600;cursor:pointer}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h2>Queue + stuck call maintenance</h2>
+<p><small>Runs artisan commands on the server. No calls are placed by these actions.</small></p>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<input type="hidden" name="action" value="clear">
+<button type="submit">Clear stale campaign queue + restart workers</button>
+</form>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<input type="hidden" name="action" value="cleanup">
+<button type="submit">Cleanup stuck calls and phantom queue entries</button>
+</form>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<input type="hidden" name="action" value="reset">
+<label>Campaign id</label><br>
+<input name="campaign_id" value="3">
+<button type="submit">Reset that campaign's contacts to pending and pause it</button>
+</form>
+</body>
+</html>
+HTML)->header('Content-Type', 'text/html; charset=utf-8');
+})->name('africastalking.admin-queue-maintenance');
+
+// Admin-only one-click campaign live test: runs campaigns:run-sync for a single
+// contact (a real, billable call). Requires the confirmation word.
+Route::match(['get', 'post'], '/admin/telephony/campaign-live-test', function (\Illuminate\Http\Request $request) {
+    if ($request->isMethod('post')) {
+        $request->validate([
+            'campaign' => ['required', 'string', 'max:190'],
+            'number' => ['required', 'string', 'max:40'],
+            'confirm' => ['required', 'string'],
+        ]);
+
+        if (strtoupper(trim((string) $request->input('confirm'))) !== 'CALL') {
+            return response('Type CALL in the confirmation box to place a real call.', 422)
+                ->header('Content-Type', 'text/plain; charset=utf-8');
+        }
+
+        $arguments = [
+            'campaign' => (string) $request->input('campaign'),
+            '--retry-failed' => true,
+            '--limit' => '1',
+        ];
+
+        if ((string) $request->input('from') !== '') {
+            $arguments['--from'] = (string) $request->input('from');
+        }
+
+        $buffer = new \Symfony\Component\Console\Output\BufferedOutput();
+
+        try {
+            \Illuminate\Support\Facades\Artisan::call('campaigns:run-sync', $arguments, $buffer);
+            $text = $buffer->fetch();
+        } catch (\Throwable $e) {
+            $text = 'ERROR: '.$e->getMessage();
+        }
+
+        return response(trim($text) ?: 'No output.', 200)->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
+    $token = csrf_token();
+
+    return response(<<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Campaign live test</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 16px;background:#111;color:#eee}
+input{width:100%;padding:10px;margin:6px 0 14px;border:1px solid #444;border-radius:6px;background:#1c1c1c;color:#eee}
+button{padding:10px 18px;border:0;border-radius:6px;background:#ef4444;color:#fff;font-weight:600;cursor:pointer}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h2>Campaign live test (one real, billable call)</h2>
+<p><small>Runs campaigns:run-sync with limit 1. Only do this after the dry run passed and the AT from-number is a production number.</small></p>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<label>Campaign (id or name)</label>
+<input name="campaign" value="Service Outage Notification" required>
+<label>Destination number</label>
+<input name="number" value="+254756112633" required>
+<label>From number (optional, defaults to campaign from-number)</label>
+<input name="from" placeholder="+254711082025">
+<label>Type CALL to confirm</label>
+<input name="confirm" placeholder="CALL" required>
+<button type="submit">Place one real call</button>
+</form>
+</body>
+</html>
+HTML)->header('Content-Type', 'text/html; charset=utf-8');
+})->name('africastalking.admin-campaign-live-test');
+
 // Admin-only web runner for the SIP registration probe, for hosts without a
 // terminal (shared cPanel). The probe runs server-side, so its REGISTER comes
 // from the server's egress IP - which is what AT needs when checking an IP
