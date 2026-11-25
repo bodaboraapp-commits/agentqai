@@ -672,6 +672,13 @@ Route::middleware(['auth'])->get('/admin/telephony/deploy-check', function () {
 
             return array_slice($matches, -8);
         })(),
+        'webrtc' => [
+            'token_url' => config('africastalking.api.webrtc_token_url'),
+            'voice_api_url' => config('africastalking.api.voice_base_url'),
+            'api_base_url' => config('africastalking.api.base_url'),
+            'env_username_set' => env('AFRICASTALKING_USERNAME') !== null,
+            'env_api_key_set' => env('AFRICASTALKING_API_KEY') !== null,
+        ],
         'server_time' => now()->toDateTimeString(),
     ]);
 })->name('africastalking.deploy-check');
