@@ -112,6 +112,73 @@ Route::middleware(['auth', 'role:admin'])->get('/admin/campaigns/dial-now', func
 })->name('africastalking.admin-campaign-dial-now');
 
 
+// Admin-only web runner for the campaign dry run, for hosts without a
+// terminal. Validates the whole campaign outbound path with no billable call.
+Route::match(['get', 'post'], '/admin/telephony/campaign-dry-run', function (\Illuminate\Http\Request $request) {
+    if ($request->isMethod('post')) {
+        $request->validate([
+            'campaign' => ['required', 'string', 'max:190'],
+            'number' => ['required', 'string', 'max:40'],
+        ]);
+
+        $arguments = [
+            'campaign' => (string) $request->input('campaign'),
+            'number' => (string) $request->input('number'),
+        ];
+
+        if ((string) $request->input('from') !== '') {
+            $arguments['--from'] = (string) $request->input('from');
+        }
+
+        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+
+        try {
+            \Illuminate\Support\Facades\Artisan::call('campaigns:dry-run', $arguments, $output);
+            $text = $output->fetch();
+        } catch (\Throwable $e) {
+            $text = 'ERROR: '.$e->getMessage();
+        }
+
+        if (trim($text) === '') {
+            $text = 'No output. Check storage/logs/laravel.log for details.';
+        }
+
+        return response($text, 200)->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
+    $token = csrf_token();
+
+    return response(<<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Campaign dry run</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 16px;background:#111;color:#eee}
+input{width:100%;padding:10px;margin:6px 0 14px;border:1px solid #444;border-radius:6px;background:#1c1c1c;color:#eee}
+button{padding:10px 18px;border:0;border-radius:6px;background:#22c55e;color:#04220f;font-weight:600;cursor:pointer}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h2>Campaign dry run (no billable call)</h2>
+<p><small>Runs on this server with the stored production AT credentials. It checks the campaign, destination normalisation, provider, credentials, answer URL, AT Voice API reachability and queue state. No call is placed.</small></p>
+<form method="post">
+<input type="hidden" name="_token" value="{$token}">
+<label>Campaign (id or name)</label>
+<input name="campaign" value="Service Outage Notification" required>
+<label>Destination number</label>
+<input name="number" value="+254756112633" required>
+<label>From number (optional, defaults to the campaign from-number)</label>
+<input name="from" placeholder="+254711082025">
+<button type="submit">Run dry run</button>
+</form>
+</body>
+</html>
+HTML)->header('Content-Type', 'text/html; charset=utf-8');
+})->name('africastalking.admin-campaign-dry-run');
+
 // Admin-only web runner for the SIP registration probe, for hosts without a
 // terminal (shared cPanel). The probe runs server-side, so its REGISTER comes
 // from the server's egress IP - which is what AT needs when checking an IP
